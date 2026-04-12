@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>킨더보드 AI 비서 베스트 수업 사례 2026</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+/* ─── reset ─────────────────────────────── */
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'Pretendard',sans-serif;
+  background:#E8E8E8;
+  min-height:100vh;
+  padding:28px 20px 72px;
+  display:flex;flex-direction:column;align-items:center;
+}
+
+/* ─── 캔버스 (2열 그리드) ────────────────── */
+#full-canvas{
+  width:1120px;
+  background:#E8E8E8;
+  padding:28px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:22px;
+  align-items:start;
+}
+
+/* ─── 공통: 정사각형 카드 ────────────────── */
+.card-unit{
+  width:100%;
+  aspect-ratio:1/1;
+  border-radius:22px;
+  overflow:hidden;           /* 모든 카드 모서리 통일 */
+  box-shadow:0 6px 28px rgba(0,0,0,0.13);
+  position:relative;
+  flex-shrink:0;
+}
+
+/* ─── 케이스 카드 공통 ───────────────────── */
+.deco{position:absolute;border-radius:50%;}
+.kb-badge{
+  position:absolute;background:white;border-radius:50px;
+  padding:5px 15px;font-weight:800;font-size:11px;color:#1A1A2E;
+}
+.wcard{background:white;border-radius:16px;padding:12px 14px;}
+.sc{
+  width:34px;height:34px;border-radius:50%;
+  color:white;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:15px;flex-shrink:0;
+}
+
+/* ─── 사진 카드 내부 ─────────────────────── */
+.photo-inner{
+  width:100%;height:100%;
+  background:white;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+
+/* 헤더 */
+.pc-head{
+  padding:15px 18px 12px;
+  display:flex;align-items:flex-start;gap:11px;
+  border-bottom:1.5px solid #F2F2F2;
+  flex-shrink:0;
+}
+.pc-badge-wrap{
+  flex-shrink:0;
+  border-radius:50px;
+  overflow:hidden;
+  margin-top:2px;
+}
+.pc-badge-wrap input{
+  font-size:10px;font-weight:800;letter-spacing:1.5px;
+  border:none;outline:none;
+  padding:5px 13px;
+  text-align:center;
+  font-family:'Pretendard',sans-serif;
+  background:transparent;
+  display:block;
+  min-width:70px;
+  cursor:text;
+}
+.pc-fields{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0;}
+
+/* 텍스트 입력 필드 공통 */
+.f-title, .f-team, .f-comment{
+  border:none;outline:none;background:transparent;
+  font-family:'Pretendard',sans-serif;
+  width:100%;display:block;
+  border-radius:6px;
+  transition:background 0.15s;
+}
+.f-title:focus,.f-team:focus,.f-comment:focus{background:rgba(99,102,241,0.07);}
+
+.f-title{
+  font-size:15px;font-weight:800;color:#1A1A2E;
+  padding:2px 4px;line-height:1.35;
+}
+.f-title::placeholder{color:#CCC;font-weight:600;}
+
+.f-team{
+  font-size:12px;color:#AAA;font-weight:500;
+  padding:1px 4px;
+}
+.f-team::placeholder{color:#DDD;}
+
+/* ─── 사진 슬롯 ──────────────────────────── */
+.photo-body{
+  flex:1;padding:11px 14px 0;
+  min-height:0;
+  display:flex;flex-direction:column;
+}
+.slot{
+  width:100%;flex:1;
+  border-radius:13px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:8px;
+  cursor:pointer;
+  position:relative;
+  overflow:hidden;
+  transition:opacity 0.15s;
+}
+.slot:hover{opacity:0.88;}
+
+/* 파일 인풋은 클릭 영역 전체 덮기 */
+.slot input[type=file]{
+  position:absolute;inset:0;
+  opacity:0;cursor:pointer;
+  width:100%;height:100%;z-index:5;
+}
+/* 업로드된 이미지: object-fit contain (잘림 없음) */
+.slot .photo-preview{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  object-fit:contain;   /* ← contain: 비율 유지, 잘림 없음 */
+  background:#F0F0F0;   /* contain 여백 배경 */
+  border-radius:13px;
+  z-index:1;
+}
+.slot-inner{
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:8px;z-index:2;pointer-events:none;
+}
+.slot-icon{
+  width:46px;height:46px;border-radius:13px;
+  display:flex;align-items:center;justify-content:center;
+}
+.slot-text{font-size:13px;font-weight:700;color:#555;}
+.slot-sub{font-size:11px;color:#AAA;}
+
+/* ─── 코멘트 ─────────────────────────────── */
+.comment-wrap{
+  padding:8px 14px 13px;
+  display:flex;flex-direction:column;gap:6px;
+  flex-shrink:0;
+}
+.cap-row{display:flex;align-items:center;gap:8px;}
+.cap-line{flex:1;height:1.5px;background:#EEE;border-radius:1px;}
+.cap-label{font-size:10px;font-weight:700;color:#CCC;white-space:nowrap;}
+
+/* 자동 높이 조절 textarea */
+.f-comment{
+  resize:none;
+  overflow:hidden;     /* 스크롤바 제거 */
+  line-height:1.6;
+  font-size:12px;font-weight:500;color:#333;
+  padding:8px 11px;
+  border-radius:10px;
+  background:#F8F8F8;
+  min-height:36px;
+  border:1.5px solid transparent;
+}
+.f-comment:focus{border-color:#A29BFE;background:#FAFAFE;}
+.f-comment::placeholder{color:#CCC;}
+
+/* ─── 카드 래퍼 (삭제 버튼 포함) ────────── */
+.card-wrap{position:relative;}
+.del-btn{
+  position:absolute;top:-10px;right:-10px;
+  width:28px;height:28px;border-radius:50%;
+  background:#FF4D4D;color:white;border:none;
+  font-size:14px;font-weight:700;cursor:pointer;
+  display:none;align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,0.22);z-index:40;
+}
+.card-wrap:hover .del-btn{display:flex;}
+
+/* ─── 카드 추가 버튼 ─────────────────────── */
+.add-card-btn{
+  width:100%;aspect-ratio:1/1;
+  border:2.5px dashed #CCCCCC;border-radius:22px;
+  background:rgba(255,255,255,0.5);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;
+  cursor:pointer;font-size:14px;font-weight:700;color:#999;
+  transition:all 0.18s;
+}
+.add-card-btn:hover{border-color:#A29BFE;color:#A29BFE;background:rgba(162,155,254,0.06);}
+
+/* ─── 컬러 피커 모달 ─────────────────────── */
+.cpk-wrap{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.42);
+  align-items:center;justify-content:center;z-index:999;
+}
+.cpk-wrap.show{display:flex;}
+.cpk-box{
+  background:white;border-radius:22px;
+  padding:28px 32px;max-width:380px;width:90%;
+  box-shadow:0 14px 48px rgba(0,0,0,0.18);
+}
+.cpk-title{font-size:16px;font-weight:800;color:#1A1A2E;margin-bottom:20px;text-align:center;}
+.swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.swatch{
+  height:52px;border-radius:12px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;
+  border:3px solid transparent;transition:transform 0.12s;
+}
+.swatch:hover{transform:scale(1.06);}
+.swatch.on{border-color:#1A1A2E;}
+.cpk-btns{display:flex;gap:10px;}
+.cpk-ok{
+  flex:1;padding:11px;background:#1A1A2E;color:white;
+  border:none;border-radius:50px;font-size:13px;font-weight:700;
+  cursor:pointer;font-family:'Pretendard',sans-serif;
+}
+.cpk-cancel{
+  padding:11px 20px;background:#F0F0F0;color:#666;
+  border:none;border-radius:50px;font-size:13px;font-weight:700;
+  cursor:pointer;font-family:'Pretendard',sans-serif;
+}
+
+/* ─── 저장 컨트롤 ────────────────────────── */
+#controls{
+  margin-top:26px;display:flex;gap:12px;
+  align-items:center;justify-content:center;flex-wrap:wrap;
+}
+.btn-main{
+  padding:13px 38px;background:#1A1A2E;color:white;
+  border:none;border-radius:50px;font-size:14px;font-weight:700;
+  cursor:pointer;font-family:'Pretendard',sans-serif;transition:background 0.15s;
+}
+.btn-main:hover{background:#333;}
+.btn-main:disabled{background:#999;cursor:not-allowed;}
+.btn-sub{
+  padding:13px 24px;background:white;color:#1A1A2E;
+  border:1.5px solid #DDD;border-radius:50px;
+  font-size:14px;font-weight:700;cursor:pointer;
+  font-family:'Pretendard',sans-serif;transition:border-color 0.15s;
+}
+.btn-sub:hover{border-color:#999;}
+#save-tip{margin-top:10px;font-size:12px;color:#999;text-align:center;}
+#edit-hint{
+  margin-bottom:16px;padding:10px 22px;
+  background:rgba(162,155,254,0.14);border-radius:50px;
+  font-size:12px;color:#7B74D4;font-weight:600;text-align:center;
+}
+
+/* ─── 저장용 hidden 클래스 ───────────────── */
+.save-hide{display:none!important;}
+</style>
+</head>
+<body>
+
+<div id="edit-hint">✏️ 제목 · 팀 이름 · 코멘트 클릭해서 입력 &nbsp;|&nbsp; 📷 사진 슬롯 클릭해서 업로드 &nbsp;|&nbsp; 🗑 카드에 마우스 올리면 삭제 버튼</div>
+
+<div id="full-canvas">
+
+  <!-- ①  COVER ─────────────────────────── -->
+  <div class="card-unit" style="background:#FF6B9D;">
+    <div class="deco" style="width:17%;height:17%;background:rgba(255,255,255,0.18);top:-3%;left:-3%;"></div>
+    <div class="deco" style="width:9%;height:9%;background:rgba(255,255,255,0.13);bottom:8%;right:-2%;"></div>
+    <div class="deco" style="width:3.2%;height:3.2%;background:#FFD93D;top:9%;left:21%;"></div>
+    <div class="deco" style="width:2.2%;height:2.2%;background:#FFD93D;bottom:22%;left:10%;"></div>
+    <div class="deco" style="width:2.5%;height:2.5%;background:rgba(255,255,255,0.55);top:42%;right:18%;"></div>
+    <div class="kb-badge" style="top:4.5%;left:4.5%;font-size:10px;color:#FF6B9D;">🌸 KINDERBOARD</div>
+    <div style="position:absolute;top:4.5%;right:4.5%;font-size:10px;font-weight:700;color:rgba(255,255,255,0.55);letter-spacing:2px;">2026</div>
+    <div style="position:absolute;top:13%;left:6%;right:6%;">
+      <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.82);margin-bottom:1%;">현장 교사들의 생생 리얼 사례</div>
+      <div style="font-size:clamp(32px,9.5%,56px);font-weight:800;color:white;line-height:1.01;letter-spacing:-0.04em;">AI 비서<br>베스트<br>수업 사례</div>
+    </div>
+    <div style="position:absolute;bottom:11%;right:5%;">
+      <svg width="126" height="126" viewBox="0 0 130 130" fill="none">
+        <rect x="25" y="50" width="80" height="70" rx="18" fill="white"/>
+        <rect x="38" y="18" width="54" height="42" rx="14" fill="white"/>
+        <circle cx="52" cy="36" r="7" fill="#FF6B9D"/><circle cx="78" cy="36" r="7" fill="#FF6B9D"/>
+        <circle cx="52" cy="36" r="3" fill="#1A1A2E"/><circle cx="78" cy="36" r="3" fill="#1A1A2E"/>
+        <line x1="65" y1="18" x2="65" y2="6" stroke="#1A1A2E" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="65" cy="5" r="5" fill="#FFD93D"/>
+        <path d="M54 50 Q65 60 76 50" stroke="#FF6B9D" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        <rect x="38" y="64" width="54" height="34" rx="10" fill="#FFE0EE"/>
+        <text x="65" y="87" text-anchor="middle" font-size="11" font-weight="900" fill="#FF6B9D" font-family="Pretendard">AI 비서</text>
+        <rect x="5" y="60" width="22" height="12" rx="6" fill="white"/><rect x="103" y="60" width="22" height="12" rx="6" fill="white"/>
+        <rect x="38" y="116" width="20" height="12" rx="6" fill="white"/><rect x="72" y="116" width="20" height="12" rx="6" fill="white"/>
+      </svg>
+    </div>
+    <div style="position:absolute;bottom:10%;left:5%;width:19%;aspect-ratio:1/1;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:13px;color:#FF6B9D;border:3px solid #FFD93D;line-height:1.3;">현장<br>대박<br>사례!</div>
+    <div style="position:absolute;top:47%;left:5%;font-size:18px;color:rgba(255,255,255,0.28);">★</div>
+    <div style="position:absolute;top:53%;left:9%;font-size:12px;color:rgba(255,255,255,0.18);">★</div>
+  </div>
+
+  <!-- ②  CASE 01 봄 단어 낚시 ─────────── -->
+  <div class="card-unit" style="background:#5CE8C8;">
+    <div class="deco" style="width:19%;height:19%;background:rgba(255,255,255,0.18);top:-5%;right:-3%;"></div>
+    <div class="deco" style="width:7%;height:7%;background:#FFD93D;bottom:13%;left:5%;opacity:.85;"></div>
+    <div class="deco" style="width:2.5%;height:2.5%;background:#FF6B9D;top:13%;left:10%;"></div>
+    <div class="kb-badge" style="top:4.5%;left:4.5%;color:#5CE8C8;font-size:10px;">CASE 01 · AI 비서 활용</div>
+    <div style="position:absolute;top:11%;left:5%;right:5%;">
+      <div style="font-size:clamp(28px,8.5%,52px);font-weight:800;color:#1A1A2E;line-height:1.04;letter-spacing:-0.03em;margin-bottom:1.5%;">봄 단어<br>낚시 놀이 🎣</div>
+      <div style="font-size:11px;font-weight:600;color:rgba(26,26,46,0.6);">AI 비서 한 마디로 수업 아이디어 완성!</div>
+    </div>
+    <div style="position:absolute;top:40%;right:5%;background:#1A1A2E;color:white;border-radius:14px 14px 4px 14px;padding:10px 14px;max-width:32%;">
+      <div style="font-size:11px;font-weight:600;line-height:1.55;">"킨더보드 잘쓴 노하우 칭찬합니다!" 👏</div>
+    </div>
+    <div style="position:absolute;bottom:4.5%;left:5%;right:5%;display:flex;flex-direction:column;gap:1.5%;">
+      <div class="wcard" style="display:flex;align-items:center;gap:10px;">
+        <div class="sc" style="background:#5CE8C8;">1</div>
+        <div><div style="font-size:12px;font-weight:800;color:#1A1A2E;">"봄 단어 낚시 놀이 제안해줘!"</div><div style="font-size:10px;color:#666;margin-top:2px;">AI 비서 질문 하나로 아이디어 즉시 획득</div></div>
+      </div>
+      <div class="wcard" style="display:flex;align-items:center;gap:10px;">
+        <div class="sc" style="background:#FF6B9D;">2</div>
+        <div><div style="font-size:12px;font-weight:800;color:#1A1A2E;">AI 카드 만들기로 단어 카드 제작</div><div style="font-size:10px;color:#666;margin-top:2px;">봄 글자 카드를 직접 뽑아서 수업에 활용</div></div>
+      </div>
+      <div class="wcard" style="display:flex;align-items:center;gap:10px;">
+        <div class="sc" style="background:#FFD93D;color:#1A1A2E;">3</div>
+        <div><div style="font-size:12px;font-weight:800;color:#1A1A2E;">아이들이 봄 글자에 줄을 서요! 🌸</div><div style="font-size:10px;color:#666;margin-top:2px;">예상 밖의 폭발적인 참여 반응 🎉</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③  CASE 02·03 ────────────────────── -->
+  <div class="card-unit" style="background:#FFD93D;">
+    <div class="deco" style="width:14%;height:14%;background:rgba(255,255,255,0.2);bottom:-2%;right:-2%;"></div>
+    <div class="deco" style="width:9%;height:9%;background:#FF7043;top:4%;right:5%;opacity:.85;"></div>
+    <div style="position:absolute;top:17%;right:8%;font-size:20px;color:rgba(26,26,46,0.18);">★</div>
+    <div class="deco" style="width:3%;height:3%;background:#5CE8C8;top:12%;left:5%;"></div>
+    <div class="kb-badge" style="top:4.5%;left:4.5%;color:#B89800;font-size:10px;">CASE 02 · 03 · AI 비서 활용</div>
+    <div style="position:absolute;top:11%;left:5%;right:5%;">
+      <div style="font-size:clamp(26px,7.5%,48px);font-weight:800;color:#1A1A2E;line-height:1.07;letter-spacing:-0.02em;margin-bottom:2%;">AI로 만든<br>수업 자료들 🌍📚</div>
+    </div>
+    <div style="position:absolute;top:42%;left:5%;right:5%;display:grid;grid-template-columns:1fr 1fr;gap:2.5%;">
+      <div class="wcard" style="text-align:center;padding:14px 10px;">
+        <svg width="52" height="52" viewBox="0 0 60 60" fill="none" style="margin-bottom:8px;">
+          <circle cx="30" cy="30" r="28" fill="#5CE8C8"/>
+          <ellipse cx="22" cy="26" rx="10" ry="8" fill="#6BCB77"/><ellipse cx="38" cy="34" rx="9" ry="7" fill="#6BCB77"/><ellipse cx="30" cy="18" rx="6" ry="5" fill="#6BCB77"/>
+          <circle cx="22" cy="30" r="2.5" fill="#1A1A2E"/><circle cx="38" cy="30" r="2.5" fill="#1A1A2E"/>
+          <path d="M24 38 Q30 44 36 38" stroke="#1A1A2E" stroke-width="2" stroke-linecap="round" fill="none"/>
+          <circle cx="18" cy="34" r="3" fill="#FF6B9D" opacity=".4"/><circle cx="42" cy="34" r="3" fill="#FF6B9D" opacity=".4"/>
+        </svg>
+        <div style="font-size:13px;font-weight:800;color:#1A1A2E;margin-bottom:4px;line-height:1.3;">3D 지구<br>캐릭터 제작</div>
+        <div style="font-size:10px;color:#555;line-height:1.5;">"지켜주고싶게 생긴 지구!" 아이들이 환경보호를 다짐 💚</div>
+      </div>
+      <div class="wcard" style="text-align:center;padding:14px 10px;">
+        <svg width="52" height="52" viewBox="0 0 60 60" fill="none" style="margin-bottom:8px;">
+          <rect x="10" y="12" width="36" height="38" rx="6" fill="#A29BFE"/><rect x="10" y="12" width="6" height="38" rx="3" fill="#7B6FD4"/>
+          <rect x="18" y="20" width="22" height="3" rx="1.5" fill="white" opacity=".85"/><rect x="18" y="27" width="16" height="2.5" rx="1.25" fill="white" opacity=".65"/>
+          <circle cx="29" cy="44" r="5" fill="#FFD93D"/>
+          <path d="M27 44 L28.5 46 L32 42" stroke="#1A1A2E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div style="font-size:13px;font-weight:800;color:#1A1A2E;margin-bottom:4px;line-height:1.3;">AI 동화책<br>스토리북</div>
+        <div style="font-size:10px;color:#555;line-height:1.5;">꿀벌 스토리북 → 야외 신체활동으로 확장! 🐝</div>
+      </div>
+    </div>
+    <div style="position:absolute;bottom:4%;left:5%;right:5%;background:#1A1A2E;border-radius:14px;padding:11px 16px;">
+      <div style="font-size:11px;color:white;font-weight:600;line-height:1.65;">"간단하고 캐릭터가 귀여워서 아이들이 정말 좋아했어요! AI 동화책을 이렇게 쉽게 만들 수 있다니 최고예요 =)"</div>
+    </div>
+  </div>
+
+  <!-- ④  CASE 04·05 ────────────────────── -->
+  <div class="card-unit" style="background:#A29BFE;">
+    <div class="deco" style="width:20%;height:20%;background:rgba(255,255,255,0.13);top:-7%;left:-5%;"></div>
+    <div class="deco" style="width:11%;height:11%;background:#FFD93D;bottom:4%;right:-2%;opacity:.6;"></div>
+    <div class="deco" style="width:2.5%;height:2.5%;background:#FF6B9D;top:36%;left:5%;"></div>
+    <div class="kb-badge" style="top:4.5%;left:4.5%;color:#6B64D4;font-size:10px;">CASE 04 · 05 · AI 비서 활용</div>
+    <div style="position:absolute;top:11%;left:5%;right:5%;">
+      <div style="font-size:clamp(26px,7.8%,50px);font-weight:800;color:white;line-height:1.04;letter-spacing:-0.03em;margin-bottom:1.5%;">봄꽃 메뉴판<br>&amp; 컬러링 🌸🎨</div>
+      <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.75);">교실 놀이를 더 풍성하게!</div>
+    </div>
+    <div style="position:absolute;bottom:4.5%;left:5%;right:5%;display:flex;flex-direction:column;gap:1.8%;">
+      <div class="wcard" style="display:flex;align-items:flex-start;gap:9px;">
+        <div style="width:36px;height:36px;border-radius:11px;background:#FFD93D;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🌺</div>
+        <div><div style="font-size:12px;font-weight:800;color:#1A1A2E;">봄꽃 메뉴판 + 봄곤충 한글 카드</div><div style="font-size:10px;color:#555;line-height:1.5;margin-top:2px;">개나리·벚꽃·진달래 메뉴판 제작 → 가게 놀이로 확장!</div></div>
+      </div>
+      <div class="wcard" style="display:flex;align-items:flex-start;gap:9px;">
+        <div style="width:36px;height:36px;border-radius:11px;background:#5CE8C8;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🖍️</div>
+        <div><div style="font-size:12px;font-weight:800;color:#1A1A2E;">아이 맞춤 컬러링 제작</div><div style="font-size:10px;color:#555;line-height:1.5;margin-top:2px;">"AI가 내 맘을 알고 만들어줘서 신기해요!" — 4세 여아 🥹</div></div>
+      </div>
+      <div class="wcard" style="display:flex;align-items:flex-start;gap:9px;">
+        <div style="width:36px;height:36px;border-radius:11px;background:#FF6B9D;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">♻️</div>
+        <div><div style="font-size:12px;font-weight:800;color:#1A1A2E;">재활용 홍보 포스터</div><div style="font-size:10px;color:#555;line-height:1.5;margin-top:2px;">우유갑이 휴지가 되는 재활용 포스터 즉시 완성!</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑤  CTA ─────────────────────────────── -->
+  <div class="card-unit" style="background:#1A1A2E;">
+    <div class="deco" style="width:38%;height:38%;background:rgba(90,15,45,0.5);top:-15%;right:-10%;"></div>
+    <div class="deco" style="width:20%;height:20%;background:rgba(0,55,45,0.5);bottom:-7%;left:-5%;"></div>
+    <div class="deco" style="width:4%;height:4%;background:#FFD93D;top:15%;left:11%;"></div>
+    <div class="deco" style="width:2.5%;height:2.5%;background:#FF6B9D;top:25%;right:14%;"></div>
+    <div style="position:absolute;top:5%;left:0;right:0;text-align:center;font-size:10px;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:3px;">KINDERBOARD 2026</div>
+    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8%;">
+      <svg width="70" height="70" viewBox="0 0 80 80" fill="none" style="margin-bottom:5%;">
+        <circle cx="40" cy="40" r="40" fill="#FFD93D"/>
+        <path d="M22 40 L34 52 L58 28" stroke="#1A1A2E" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div style="font-size:clamp(26px,7%,44px);font-weight:800;color:white;text-align:center;line-height:1.1;letter-spacing:-0.02em;margin-bottom:3%;">선생님과<br>함께 만드는<br><span style="color:#FFD93D;">킨더보드</span> 🌱</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.55);text-align:center;line-height:1.85;margin-bottom:5%;">재미있게 만든 수업 사례, 공유해 주세요!<br>학습공동체에서 더 많은 아이디어를 함께 나눠요.</div>
+      <div style="display:flex;gap:2%;flex-wrap:wrap;justify-content:center;">
+        <div style="background:#FF6B9D;border-radius:50px;padding:7px 16px;font-size:12px;font-weight:700;color:white;">AI 비서</div>
+        <div style="background:#5CE8C8;border-radius:50px;padding:7px 16px;font-size:12px;font-weight:700;color:#1A1A2E;">스토리북</div>
+        <div style="background:#FFD93D;border-radius:50px;padding:7px 16px;font-size:12px;font-weight:700;color:#1A1A2E;">놀이기록</div>
+        <div style="background:#A29BFE;border-radius:50px;padding:7px 16px;font-size:12px;font-weight:700;color:white;">컬러링</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑥  기본 사진 카드 ─────────────────── -->
+  <div class="card-wrap" id="pc-default">
+    <button class="del-btn" onclick="removeCard(this)">✕</button>
+    <div class="card-unit" style="background:white;">
+      <div class="photo-inner">
+        <div class="pc-head">
+          <div class="pc-badge-wrap" style="background:#5CE8C8;">
+            <input type="text" value="CASE 01" placeholder="CASE" style="color:#1A1A2E;" class="pc-badge-input">
+          </div>
+          <div class="pc-fields">
+            <input type="text" class="f-title" placeholder="제목을 입력하세요" value="꽃씨 동요판 만들기">
+            <input type="text" class="f-team" placeholder="팀 이름을 입력하세요 (예: 햇살반)" value="킨더보드 PLC 1차">
+          </div>
+        </div>
+        <div class="photo-body">
+          <div class="slot" style="border:2px dashed #5CE8C8;background:#F5FFFC;" id="slot-default">
+            <input type="file" accept="image/*" onchange="loadImage(this,'#5CE8C8')">
+            <div class="slot-inner">
+              <div class="slot-icon" style="background:#E0FAF3;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="3" stroke="#5CE8C8" stroke-width="2"/><circle cx="12" cy="12" r="3.5" stroke="#5CE8C8" stroke-width="2"/><circle cx="17.5" cy="7.5" r="1.2" fill="#5CE8C8"/></svg>
+              </div>
+              <div class="slot-text">📷 클릭해서 사진 업로드</div>
+              <div class="slot-sub">JPG · PNG · 비율 그대로 유지돼요</div>
+            </div>
+          </div>
+        </div>
+        <div class="comment-wrap">
+          <div class="cap-row">
+            <div class="cap-line"></div>
+            <span class="cap-label">✏️ 한 줄 코멘트</span>
+            <div class="cap-line"></div>
+          </div>
+          <textarea class="f-comment" placeholder="수업 소감이나 아이들 반응을 자유롭게 입력하세요 :)" oninput="autoResize(this)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 카드 추가 버튼 -->
+  <div id="add-wrap">
+    <div class="add-card-btn" onclick="showPicker()">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+        <line x1="12" y1="8" x2="12" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      사진 첨부 카드 추가하기
+    </div>
+  </div>
+
+</div><!-- /full-canvas -->
+
+<!-- 컬러 피커 모달 -->
+<div class="cpk-wrap" id="picker">
+  <div class="cpk-box">
+    <div class="cpk-title">레이블 컬러 선택</div>
+    <div class="swatches">
+      <div class="swatch on" data-c="#5CE8C8" data-t="#1A1A2E" style="background:#5CE8C8;color:#1A1A2E;" onclick="pickSwatch(this)">민트</div>
+      <div class="swatch" data-c="#FF6B9D" data-t="white" style="background:#FF6B9D;color:white;" onclick="pickSwatch(this)">핑크</div>
+      <div class="swatch" data-c="#FFD93D" data-t="#1A1A2E" style="background:#FFD93D;color:#1A1A2E;" onclick="pickSwatch(this)">옐로우</div>
+      <div class="swatch" data-c="#A29BFE" data-t="white" style="background:#A29BFE;color:white;" onclick="pickSwatch(this)">퍼플</div>
+      <div class="swatch" data-c="#6BCB77" data-t="white" style="background:#6BCB77;color:white;" onclick="pickSwatch(this)">그린</div>
+      <div class="swatch" data-c="#FF7043" data-t="white" style="background:#FF7043;color:white;" onclick="pickSwatch(this)">코랄</div>
+      <div class="swatch" data-c="#4FC3F7" data-t="white" style="background:#4FC3F7;color:white;" onclick="pickSwatch(this)">스카이</div>
+      <div class="swatch" data-c="#1A1A2E" data-t="white" style="background:#1A1A2E;color:white;" onclick="pickSwatch(this)">네이비</div>
+    </div>
+    <div class="cpk-btns">
+      <button class="cpk-ok" onclick="addCard()">카드 추가</button>
+      <button class="cpk-cancel" onclick="hidePicker()">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- 저장 컨트롤 -->
+<div id="controls">
+  <button class="btn-main" id="dl-btn" onclick="save('jpg')">🖼️ 전체 JPG로 저장</button>
+  <button class="btn-sub" onclick="save('png')">PNG로 저장</button>
+</div>
+<div id="save-tip">텍스트·사진 입력 후 저장하면 그대로 이미지에 반영돼요</div>
+
+<style>
+/* pc-badge-input 공통 */
+.pc-badge-input{
+  font-size:10px;font-weight:800;letter-spacing:1.5px;
+  border:none;outline:none;
+  padding:5px 13px;
+  text-align:center;
+  font-family:'Pretendard',sans-serif;
+  background:transparent;
+  display:block;
+  min-width:68px;
+  cursor:text;
+}
+</style>
+
+<script>
+var selC='#5CE8C8', selT='#1A1A2E';
+
+/* ─── textarea 자동 높이 ─ */
+function autoResize(el){
+  el.style.height='auto';
+  el.style.height=el.scrollHeight+'px';
+}
+document.querySelectorAll('.f-comment').forEach(function(t){
+  autoResize(t);
+  t.addEventListener('input',function(){autoResize(this);});
+});
+
+/* ─── 사진 업로드 ─────────── */
+function loadImage(input, borderColor){
+  var slot = input.closest('.slot');
+  var file = input.files[0]; if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    /* 기존 이미지 제거 */
+    var old = slot.querySelector('.photo-preview'); if(old) old.remove();
+    /* slot-inner 숨기기 */
+    var inner = slot.querySelector('.slot-inner');
+    if(inner) inner.style.display='none';
+    /* 이미지 추가 (object-fit:contain) */
+    var img = document.createElement('img');
+    img.className = 'photo-preview';
+    img.src = e.target.result;
+    slot.appendChild(img);
+    /* 테두리 완료 색상 */
+    slot.style.border = '2px solid #4CAF50';
+    /* file input을 맨 앞 z-index로 유지 → 클릭 시 교체 가능 */
+    input.style.zIndex = '6';
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ─── 카드 삭제 ─────────── */
+function removeCard(btn){
+  if(confirm('이 카드를 삭제할까요?')) btn.closest('.card-wrap').remove();
+}
+
+/* ─── 컬러 피커 ─────────── */
+function showPicker(){ document.getElementById('picker').classList.add('show'); }
+function hidePicker(){ document.getElementById('picker').classList.remove('show'); }
+function pickSwatch(el){
+  document.querySelectorAll('.swatch').forEach(function(s){s.classList.remove('on');});
+  el.classList.add('on');
+  selC=el.dataset.c; selT=el.dataset.t;
+}
+
+/* ─── 사진 카드 추가 ─────── */
+function addCard(){
+  hidePicker();
+  var wrap = document.createElement('div'); wrap.className='card-wrap';
+
+  var del = document.createElement('button'); del.className='del-btn'; del.textContent='✕';
+  del.onclick=function(){removeCard(this);}; wrap.appendChild(del);
+
+  var unit = document.createElement('div');
+  unit.className='card-unit'; unit.style.background='white';
+
+  var slotBg = selC+'18';
+  unit.innerHTML=`
+    <div class="photo-inner">
+      <div class="pc-head">
+        <div class="pc-badge-wrap" style="background:${selC};">
+          <input type="text" value="CASE" placeholder="CASE" class="pc-badge-input" style="color:${selT};">
+        </div>
+        <div class="pc-fields">
+          <input type="text" class="f-title" placeholder="제목을 입력하세요">
+          <input type="text" class="f-team" placeholder="팀 이름을 입력하세요 (예: 햇살반)">
+        </div>
+      </div>
+      <div class="photo-body">
+        <div class="slot" style="border:2px dashed ${selC};background:${slotBg};">
+          <input type="file" accept="image/*" onchange="loadImage(this,'${selC}')">
+          <div class="slot-inner">
+            <div class="slot-icon" style="background:${selC}30;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="3" stroke="${selC}" stroke-width="2"/><circle cx="12" cy="12" r="3.5" stroke="${selC}" stroke-width="2"/><circle cx="17.5" cy="7.5" r="1.2" fill="${selC}"/></svg>
+            </div>
+            <div class="slot-text">📷 클릭해서 사진 업로드</div>
+            <div class="slot-sub">JPG · PNG · 비율 그대로 유지돼요</div>
+          </div>
+        </div>
+      </div>
+      <div class="comment-wrap">
+        <div class="cap-row">
+          <div class="cap-line"></div><span class="cap-label">✏️ 한 줄 코멘트</span><div class="cap-line"></div>
+        </div>
+        <textarea class="f-comment" placeholder="수업 소감이나 아이들 반응을 자유롭게 입력하세요 :)" oninput="autoResize(this)"></textarea>
+      </div>
+    </div>`;
+
+  wrap.appendChild(unit);
+  document.getElementById('add-wrap').parentNode.insertBefore(wrap, document.getElementById('add-wrap'));
+
+  /* 새 textarea 자동 높이 적용 */
+  var newTA = unit.querySelector('.f-comment');
+  newTA.addEventListener('input',function(){autoResize(this);});
+}
+
+/* ─── 저장 ───────────────── */
+function save(fmt){
+  /* 1. blur 해제 */
+  if(document.activeElement) document.activeElement.blur();
+
+  /* 2. 저장 전 UI 숨기기 */
+  var hideEls = ['edit-hint','controls','save-tip','picker'];
+  hideEls.forEach(function(id){
+    var el=document.getElementById(id); if(el) el.classList.add('save-hide');
+  });
+  document.querySelectorAll('.del-btn,.add-card-btn').forEach(function(b){b.classList.add('save-hide');});
+  document.getElementById('add-wrap').classList.add('save-hide');
+
+  /* 3. 모든 input/textarea → div로 교체 (텍스트 캡처 보장) */
+  var reps=[];
+  document.querySelectorAll('.photo-inner input[type="text"], .photo-inner textarea, .photo-inner .pc-badge-input').forEach(function(inp){
+    var val = inp.value || '';
+    var isTa = inp.tagName==='TEXTAREA';
+    var div = document.createElement('div');
+    div.textContent = val;
+    var cs = window.getComputedStyle(inp);
+    div.style.cssText = [
+      'font-family:Pretendard,sans-serif',
+      'font-size:'+cs.fontSize,
+      'font-weight:'+cs.fontWeight,
+      'color:'+(val ? cs.color : '#CCCCCC'),
+      'padding:'+cs.padding,
+      'width:100%',
+      'display:block',
+      'line-height:'+cs.lineHeight,
+      'white-space:pre-wrap',
+      'word-break:break-word',
+      'border-radius:6px',
+      'background:transparent',
+      'box-sizing:border-box',
+    ].join(';');
+    inp.parentNode.insertBefore(div,inp);
+    inp.classList.add('save-hide');
+    reps.push({inp:inp,div:div});
+  });
+
+  var btn=document.getElementById('dl-btn');
+  btn.disabled=true; btn.textContent='저장 중...';
+
+  setTimeout(function(){
+    html2canvas(document.getElementById('full-canvas'),{
+      scale:2, useCORS:true, allowTaint:true,
+      logging:false, backgroundColor:'#E8E8E8'
+    }).then(function(canvas){
+      var type=fmt==='png'?'image/png':'image/jpeg';
+      var ext =fmt==='png'?'.png':'.jpg';
+      var link=document.createElement('a');
+      link.download='kindboard_AI베스트사례_2026'+ext;
+      link.href=canvas.toDataURL(type,fmt==='png'?1:0.93);
+      link.click();
+    }).catch(function(e){ alert('저장 실패: '+e.message); })
+    .finally(function(){
+      /* 복원 */
+      reps.forEach(function(r){ r.div.remove(); r.inp.classList.remove('save-hide'); });
+      hideEls.forEach(function(id){
+        var el=document.getElementById(id); if(el) el.classList.remove('save-hide');
+      });
+      document.querySelectorAll('.del-btn,.add-card-btn').forEach(function(b){b.classList.remove('save-hide');});
+      document.getElementById('add-wrap').classList.remove('save-hide');
+      btn.disabled=false; btn.textContent='🖼️ 전체 JPG로 저장';
+    });
+  }, 200);
+}
+</script>
+</body>
+</html>
