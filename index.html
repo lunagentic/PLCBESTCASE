@@ -3,477 +3,324 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>킨더보드 AI 비서 베스트 수업 사례 2026</title>
+<title>킨더보드 AI 비서 베스트 사례 카드 작성</title>
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
-/* ─── reset ─────────────────────────────── */
 *{margin:0;padding:0;box-sizing:border-box;}
-body{
-  font-family:'Pretendard',sans-serif;
-  background:#E8E8E8;
-  min-height:100vh;
-  padding:28px 20px 72px;
-  display:flex;flex-direction:column;align-items:center;
-}
+body{font-family:'Pretendard',sans-serif;background:#E8E8E8;min-height:100vh;}
+.screen{display:none;}
+.screen.active{display:block;}
 
-/* ─── 캔버스 (2열 그리드) ────────────────── */
-#full-canvas{
-  width:1120px;
-  background:#E8E8E8;
-  padding:28px;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:22px;
-  align-items:start;
+/* ── 로그인 ── */
+#screen-login{
+  background:linear-gradient(135deg,#FF6B9D22 0%,#A29BFE22 50%,#5CE8C822 100%);
 }
-
-/* ─── 공통: 정사각형 카드 ────────────────── */
-.card-unit{
-  width:100%;
-  aspect-ratio:1/1;
-  border-radius:22px;
-  overflow:hidden;           /* 모든 카드 모서리 통일 */
-  box-shadow:0 6px 28px rgba(0,0,0,0.13);
-  position:relative;
-  flex-shrink:0;
+.login-box{background:white;border-radius:24px;padding:40px 36px;max-width:560px;width:100%;box-shadow:0 12px 48px rgba(0,0,0,0.12);}
+.login-logo{font-size:12px;font-weight:800;color:#FF6B9D;letter-spacing:2px;background:#FFF0F5;display:inline-block;padding:5px 16px;border-radius:50px;margin-bottom:20px;}
+.login-title{font-size:22px;font-weight:800;color:#1A1A2E;line-height:1.3;margin-bottom:8px;}
+.login-desc{font-size:13px;color:#999;line-height:1.7;margin-bottom:28px;}
+.team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.team-btn{
+  padding:20px 10px;border:2px solid #EEE;border-radius:16px;
+  background:white;cursor:pointer;font-family:'Pretendard',sans-serif;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  transition:all 0.15s;
 }
+.team-btn:hover{border-color:#A29BFE;background:#FAFAFE;transform:translateY(-2px);box-shadow:0 4px 16px rgba(162,155,254,0.2);}
+.team-btn-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:white;}
+.team-btn-name{font-size:14px;font-weight:700;color:#1A1A2E;}
+.team-btn-sub{font-size:11px;color:#AAA;}
+.admin-link{display:block;text-align:center;font-size:12px;color:#CCC;cursor:pointer;margin-top:8px;transition:color 0.15s;}
+.admin-link:hover{color:#888;}
 
-/* ─── 케이스 카드 공통 ───────────────────── */
+/* ── 팀 화면 헤더 ── */
+#screen-team{padding-bottom:80px;}
+.team-header{background:white;border-bottom:1px solid #EEE;padding:0 32px;height:56px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;}
+.header-logo{font-size:12px;font-weight:800;color:#FF6B9D;letter-spacing:1px;}
+.header-sep{color:#EEE;}
+.header-team-label{font-size:14px;font-weight:700;color:#1A1A2E;}
+.save-status{font-size:11px;font-weight:600;padding:4px 11px;border-radius:50px;margin-left:auto;}
+.save-status.saved{background:#E1F5EE;color:#085041;}
+.save-status.saving{background:#FFF8CC;color:#7A5C00;}
+.save-status.offline{background:#F1EFE8;color:#5F5E5A;}
+.save-status.error{background:#FAECE7;color:#712B13;}
+.header-logout{font-size:12px;font-weight:700;color:#888;cursor:pointer;border:1px solid #DDD;border-radius:50px;padding:5px 14px;background:none;font-family:'Pretendard',sans-serif;transition:all 0.15s;}
+.header-logout:hover{border-color:#999;color:#555;}
+
+/* ── 그리드 & 카드 공통 ── */
+#full-canvas{width:1120px;background:#E8E8E8;padding:28px;display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start;margin:0 auto;}
+.card-group{display:flex;flex-direction:column;gap:8px;}
+.card-wrap{display:flex;flex-direction:column;gap:8px;position:relative;}
+.card-unit{width:100%;aspect-ratio:1/1;border-radius:22px;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,0.13);position:relative;flex-shrink:0;}
+.card-save-btn{width:100%;padding:9px 0;background:white;border:1.5px solid #E0E0E0;border-radius:50px;font-size:12px;font-weight:700;color:#666;cursor:pointer;font-family:'Pretendard',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.15s;flex-shrink:0;}
+.card-save-btn:hover{border-color:#A29BFE;color:#7B6FEA;background:rgba(162,155,254,0.07);}
+.card-save-btn:disabled{color:#AAA;border-color:#EEE;cursor:not-allowed;}
 .deco{position:absolute;border-radius:50%;}
-.kb-badge{
-  position:absolute;background:white;border-radius:50px;
-  padding:5px 15px;font-weight:800;font-size:11px;color:#1A1A2E;
-}
+.kb-badge{position:absolute;background:white;border-radius:50px;padding:5px 15px;font-weight:800;font-size:11px;color:#1A1A2E;}
 .wcard{background:white;border-radius:16px;padding:12px 14px;}
-.sc{
-  width:34px;height:34px;border-radius:50%;
-  color:white;display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:15px;flex-shrink:0;
-}
+.sc{width:34px;height:34px;border-radius:50%;color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0;}
 
-/* ─── 사진 카드 내부 ─────────────────────── */
-.photo-inner{
-  width:100%;height:100%;
-  background:white;
-  display:flex;flex-direction:column;
-  overflow:hidden;
-}
-
-/* 헤더 */
-.pc-head{
-  padding:15px 18px 12px;
-  display:flex;align-items:flex-start;gap:11px;
-  border-bottom:1.5px solid #F2F2F2;
-  flex-shrink:0;
-}
-.pc-badge-wrap{
-  flex-shrink:0;
-  border-radius:50px;
-  overflow:hidden;
-  margin-top:2px;
-}
-.pc-badge-wrap input{
-  font-size:10px;font-weight:800;letter-spacing:1.5px;
-  border:none;outline:none;
-  padding:5px 13px;
-  text-align:center;
-  font-family:'Pretendard',sans-serif;
-  background:transparent;
-  display:block;
-  min-width:70px;
-  cursor:text;
-}
+/* ── 사진 카드 내부 ── */
+.photo-inner{width:100%;height:100%;background:white;display:flex;flex-direction:column;overflow:hidden;}
+.pc-head{padding:15px 18px 12px;display:flex;align-items:flex-start;gap:11px;border-bottom:1.5px solid #F2F2F2;flex-shrink:0;}
+.pc-badge-wrap{flex-shrink:0;border-radius:50px;overflow:hidden;margin-top:2px;}
+.pc-badge-input{font-size:10px;font-weight:800;letter-spacing:1.5px;border:none;outline:none;padding:5px 13px;text-align:center;font-family:'Pretendard',sans-serif;background:transparent;display:block;min-width:68px;cursor:text;}
 .pc-fields{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0;}
-
-/* 텍스트 입력 필드 공통 */
-.f-title, .f-team, .f-comment{
-  border:none;outline:none;background:transparent;
-  font-family:'Pretendard',sans-serif;
-  width:100%;display:block;
-  border-radius:6px;
-  transition:background 0.15s;
-}
+.f-title,.f-team,.f-comment{border:none;outline:none;background:transparent;font-family:'Pretendard',sans-serif;width:100%;display:block;border-radius:6px;transition:background 0.15s;}
 .f-title:focus,.f-team:focus,.f-comment:focus{background:rgba(99,102,241,0.07);}
-
-.f-title{
-  font-size:15px;font-weight:800;color:#1A1A2E;
-  padding:2px 4px;line-height:1.35;
-}
+.f-title{font-size:15px;font-weight:800;color:#1A1A2E;padding:2px 4px;line-height:1.35;}
 .f-title::placeholder{color:#CCC;font-weight:600;}
-
-.f-team{
-  font-size:12px;color:#AAA;font-weight:500;
-  padding:1px 4px;
-}
+.f-team{font-size:12px;color:#AAA;font-weight:500;padding:1px 4px;}
 .f-team::placeholder{color:#DDD;}
-
-/* ─── 사진 슬롯 ──────────────────────────── */
-.photo-body{
-  flex:1;padding:11px 14px 0;
-  min-height:0;
-  display:flex;flex-direction:column;
-}
-.slot{
-  width:100%;flex:1;
-  border-radius:13px;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:8px;
-  cursor:pointer;
-  position:relative;
-  overflow:hidden;
-  transition:opacity 0.15s;
-}
+.photo-body{flex:1;padding:11px 14px 0;min-height:0;display:flex;flex-direction:column;}
+.slot{width:100%;flex:1;border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;position:relative;overflow:hidden;transition:opacity 0.15s;}
 .slot:hover{opacity:0.88;}
-
-/* 파일 인풋은 클릭 영역 전체 덮기 */
-.slot input[type=file]{
-  position:absolute;inset:0;
-  opacity:0;cursor:pointer;
-  width:100%;height:100%;z-index:5;
-}
-/* 업로드된 이미지: object-fit contain (잘림 없음) */
-.slot .photo-preview{
-  position:absolute;inset:0;
-  width:100%;height:100%;
-  object-fit:contain;   /* ← contain: 비율 유지, 잘림 없음 */
-  background:#F0F0F0;   /* contain 여백 배경 */
-  border-radius:13px;
-  z-index:1;
-}
-.slot-inner{
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  gap:8px;z-index:2;pointer-events:none;
-}
-.slot-icon{
-  width:46px;height:46px;border-radius:13px;
-  display:flex;align-items:center;justify-content:center;
-}
+.slot input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;z-index:5;}
+.slot .photo-preview{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#F0F0F0;border-radius:13px;z-index:1;}
+.slot-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;z-index:2;pointer-events:none;}
+.slot-icon{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;}
 .slot-text{font-size:13px;font-weight:700;color:#555;}
 .slot-sub{font-size:11px;color:#AAA;}
-
-/* ─── 코멘트 ─────────────────────────────── */
-.comment-wrap{
-  padding:8px 14px 13px;
-  display:flex;flex-direction:column;gap:6px;
-  flex-shrink:0;
-}
+.comment-wrap{padding:8px 14px 13px;display:flex;flex-direction:column;gap:6px;flex-shrink:0;}
 .cap-row{display:flex;align-items:center;gap:8px;}
 .cap-line{flex:1;height:1.5px;background:#EEE;border-radius:1px;}
 .cap-label{font-size:10px;font-weight:700;color:#CCC;white-space:nowrap;}
-
-/* 자동 높이 조절 textarea */
-.f-comment{
-  resize:none;
-  overflow:hidden;     /* 스크롤바 제거 */
-  line-height:1.6;
-  font-size:12px;font-weight:500;color:#333;
-  padding:8px 11px;
-  border-radius:10px;
-  background:#F8F8F8;
-  min-height:36px;
-  border:1.5px solid transparent;
-}
+.f-comment{resize:none;overflow:hidden;line-height:1.6;font-size:12px;font-weight:500;color:#333;padding:8px 11px;border-radius:10px;background:#F8F8F8;min-height:36px;border:1.5px solid transparent;}
 .f-comment:focus{border-color:#A29BFE;background:#FAFAFE;}
 .f-comment::placeholder{color:#CCC;}
-
-/* ─── 카드 래퍼 (삭제 버튼 포함) ────────── */
-.card-wrap{position:relative;}
-.del-btn{
-  position:absolute;top:-10px;right:-10px;
-  width:28px;height:28px;border-radius:50%;
-  background:#FF4D4D;color:white;border:none;
-  font-size:14px;font-weight:700;cursor:pointer;
-  display:none;align-items:center;justify-content:center;
-  box-shadow:0 2px 8px rgba(0,0,0,0.22);z-index:40;
-}
+.del-btn{position:absolute;top:-10px;right:-10px;width:28px;height:28px;border-radius:50%;background:#FF4D4D;color:white;border:none;font-size:14px;font-weight:700;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.22);z-index:40;}
 .card-wrap:hover .del-btn{display:flex;}
-
-/* ─── 카드 추가 버튼 ─────────────────────── */
-.add-card-btn{
-  width:100%;aspect-ratio:1/1;
-  border:2.5px dashed #CCCCCC;border-radius:22px;
-  background:rgba(255,255,255,0.5);
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:12px;
-  cursor:pointer;font-size:14px;font-weight:700;color:#999;
-  transition:all 0.18s;
-}
+.add-card-btn{width:100%;aspect-ratio:1/1;border:2.5px dashed #CCC;border-radius:22px;background:rgba(255,255,255,0.5);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;cursor:pointer;font-size:14px;font-weight:700;color:#999;transition:all 0.18s;}
 .add-card-btn:hover{border-color:#A29BFE;color:#A29BFE;background:rgba(162,155,254,0.06);}
 
-/* ─── 컬러 피커 모달 ─────────────────────── */
-.cpk-wrap{
-  display:none;position:fixed;inset:0;
-  background:rgba(0,0,0,0.42);
-  align-items:center;justify-content:center;z-index:999;
-}
+/* ── 컬러 피커 ── */
+.cpk-wrap{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.42);align-items:center;justify-content:center;z-index:999;}
 .cpk-wrap.show{display:flex;}
-.cpk-box{
-  background:white;border-radius:22px;
-  padding:28px 32px;max-width:380px;width:90%;
-  box-shadow:0 14px 48px rgba(0,0,0,0.18);
-}
+.cpk-box{background:white;border-radius:22px;padding:28px 32px;max-width:380px;width:90%;box-shadow:0 14px 48px rgba(0,0,0,0.18);}
 .cpk-title{font-size:16px;font-weight:800;color:#1A1A2E;margin-bottom:20px;text-align:center;}
 .swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
-.swatch{
-  height:52px;border-radius:12px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  font-size:11px;font-weight:700;
-  border:3px solid transparent;transition:transform 0.12s;
-}
+.swatch{height:52px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:3px solid transparent;transition:transform 0.12s;}
 .swatch:hover{transform:scale(1.06);}
 .swatch.on{border-color:#1A1A2E;}
 .cpk-btns{display:flex;gap:10px;}
-.cpk-ok{
-  flex:1;padding:11px;background:#1A1A2E;color:white;
-  border:none;border-radius:50px;font-size:13px;font-weight:700;
-  cursor:pointer;font-family:'Pretendard',sans-serif;
-}
-.cpk-cancel{
-  padding:11px 20px;background:#F0F0F0;color:#666;
-  border:none;border-radius:50px;font-size:13px;font-weight:700;
-  cursor:pointer;font-family:'Pretendard',sans-serif;
-}
+.cpk-ok{flex:1;padding:11px;background:#1A1A2E;color:white;border:none;border-radius:50px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Pretendard',sans-serif;}
+.cpk-cancel{padding:11px 20px;background:#F0F0F0;color:#666;border:none;border-radius:50px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Pretendard',sans-serif;}
 
-/* ─── 저장 컨트롤 ────────────────────────── */
-#controls{
-  margin-top:26px;display:flex;gap:12px;
-  align-items:center;justify-content:center;flex-wrap:wrap;
-}
-.btn-main{
-  padding:13px 38px;background:#1A1A2E;color:white;
-  border:none;border-radius:50px;font-size:14px;font-weight:700;
-  cursor:pointer;font-family:'Pretendard',sans-serif;transition:background 0.15s;
-}
-.btn-main:hover{background:#333;}
-.btn-main:disabled{background:#999;cursor:not-allowed;}
-.btn-sub{
-  padding:13px 24px;background:white;color:#1A1A2E;
-  border:1.5px solid #DDD;border-radius:50px;
-  font-size:14px;font-weight:700;cursor:pointer;
-  font-family:'Pretendard',sans-serif;transition:border-color 0.15s;
-}
-.btn-sub:hover{border-color:#999;}
-#save-tip{margin-top:10px;font-size:12px;color:#999;text-align:center;}
-#edit-hint{
-  margin-bottom:16px;padding:10px 22px;
-  background:rgba(162,155,254,0.14);border-radius:50px;
-  font-size:12px;color:#7B74D4;font-weight:600;text-align:center;
-}
+/* ── 전체 저장 ── */
+#controls{padding:24px 0 0;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;width:1120px;margin:0 auto;}
+.btn-all{padding:13px 38px;background:#1A1A2E;color:white;border:none;border-radius:50px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Pretendard',sans-serif;transition:background 0.15s;}
+.btn-all:hover{background:#333;}
+.btn-all:disabled{background:#999;cursor:not-allowed;}
+.btn-all-sub{padding:13px 24px;background:white;color:#1A1A2E;border:1.5px solid #DDD;border-radius:50px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Pretendard',sans-serif;}
+.btn-all-sub:hover{border-color:#999;}
 
-/* ─── 저장용 hidden 클래스 ───────────────── */
-.save-hide{display:none!important;}
+/* ── 관리자 ── */
+#screen-admin{padding:0;}
+.admin-header{background:#1A1A2E;color:white;padding:0 32px;height:56px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;}
+.admin-header-title{font-size:15px;font-weight:800;}
+.admin-hbtn{font-size:12px;font-weight:700;color:rgba(255,255,255,0.7);cursor:pointer;border:1px solid rgba(255,255,255,0.3);border-radius:50px;padding:5px 14px;background:none;font-family:'Pretendard',sans-serif;transition:all 0.15s;}
+.admin-hbtn:first-of-type{margin-left:auto;}
+.admin-hbtn:hover{border-color:white;color:white;}
+.admin-body{max-width:900px;margin:0 auto;padding:32px 20px;}
+.admin-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;}
+.admin-stat{background:white;border-radius:16px;padding:20px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,0.06);}
+.admin-stat-num{font-size:32px;font-weight:800;color:#1A1A2E;margin-bottom:4px;}
+.admin-stat-label{font-size:12px;color:#888;font-weight:600;}
+.team-grid-list{display:flex;flex-direction:column;gap:12px;}
+.team-row{background:white;border-radius:16px;padding:18px 22px;display:flex;align-items:center;gap:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06);}
+.team-avatar-sm{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:white;flex-shrink:0;}
+.team-info{flex:1;min-width:0;}
+.team-name-label{font-size:15px;font-weight:800;color:#1A1A2E;}
+.team-meta{font-size:12px;color:#888;margin-top:2px;}
+.team-status{font-size:11px;font-weight:700;padding:4px 12px;border-radius:50px;white-space:nowrap;flex-shrink:0;}
+.status-done{background:#E1F5EE;color:#085041;}
+.status-none{background:#F1EFE8;color:#5F5E5A;}
+.t-btn{padding:7px 16px;border:none;border-radius:50px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Pretendard',sans-serif;flex-shrink:0;}
+.t-btn-dark{background:#1A1A2E;color:white;}
+.t-btn-dark:hover{background:#333;}
+.admin-empty{text-align:center;padding:60px 0;color:#AAA;font-size:14px;}
+
+/* ── 미리보기 모달 ── */
+.modal-wrap{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;z-index:2000;overflow-y:auto;padding:20px;}
+.modal-wrap.show{display:flex;}
+.modal-box{background:#E8E8E8;border-radius:24px;padding:28px;max-width:540px;width:100%;max-height:90vh;overflow-y:auto;}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.modal-title{font-size:16px;font-weight:800;color:#1A1A2E;}
+.modal-close{width:32px;height:32px;border-radius:50%;background:#1A1A2E;color:white;border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.preview-cards{display:flex;flex-direction:column;gap:14px;}
+.preview-card{background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.1);}
+.preview-card-head{padding:13px 18px 11px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #F2F2F2;}
+.preview-badge{font-size:10px;font-weight:800;letter-spacing:1.5px;padding:4px 12px;border-radius:50px;}
+.preview-card-title{font-size:14px;font-weight:800;color:#1A1A2E;}
+.preview-card-team{font-size:11px;color:#AAA;margin-top:2px;}
+.preview-img{width:100%;max-height:240px;object-fit:contain;background:#F5F5F5;display:block;}
+.preview-comment{padding:10px 18px 14px;font-size:12px;color:#555;line-height:1.6;}
+.preview-no-photo{height:90px;background:#F5F5F5;display:flex;align-items:center;justify-content:center;font-size:12px;color:#BBB;}
+
+.sv-hide{display:none!important;}
 </style>
 </head>
 <body>
 
-<div id="edit-hint">✏️ 제목 · 팀 이름 · 코멘트 클릭해서 입력 &nbsp;|&nbsp; 📷 사진 슬롯 클릭해서 업로드 &nbsp;|&nbsp; 🗑 카드에 마우스 올리면 삭제 버튼</div>
-
-<div id="full-canvas">
-
-  <!-- ①  COVER ─────────────────────────── -->
-  <div class="card-unit" style="background:#FF6B9D;">
-    <div class="deco" style="width:17%;height:17%;background:rgba(255,255,255,0.18);top:-3%;left:-3%;"></div>
-    <div class="deco" style="width:9%;height:9%;background:rgba(255,255,255,0.13);bottom:8%;right:-2%;"></div>
-    <div class="deco" style="width:3.2%;height:3.2%;background:#FFD93D;top:9%;left:21%;"></div>
-    <div class="deco" style="width:2.2%;height:2.2%;background:#FFD93D;bottom:22%;left:10%;"></div>
-    <div class="deco" style="width:2.5%;height:2.5%;background:rgba(255,255,255,0.55);top:42%;right:18%;"></div>
-    <div class="kb-badge" style="top:4.5%;left:4.5%;font-size:10px;color:#FF6B9D;">🌸 KINDERBOARD</div>
-    <div style="position:absolute;top:4.5%;right:4.5%;font-size:10px;font-weight:700;color:rgba(255,255,255,0.55);letter-spacing:2px;">2026</div>
-    <div style="position:absolute;top:13%;left:6%;right:6%;">
-      <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.82);margin-bottom:1%;">현장 교사들의 생생 리얼 사례</div>
-      <div style="font-size:clamp(32px,9.5%,56px);font-weight:800;color:white;line-height:1.01;letter-spacing:-0.04em;">AI 비서<br>베스트<br>수업 사례</div>
-    </div>
-    <div style="position:absolute;bottom:11%;right:5%;">
-      <svg width="126" height="126" viewBox="0 0 130 130" fill="none">
-        <rect x="25" y="50" width="80" height="70" rx="18" fill="white"/>
-        <rect x="38" y="18" width="54" height="42" rx="14" fill="white"/>
-        <circle cx="52" cy="36" r="7" fill="#FF6B9D"/><circle cx="78" cy="36" r="7" fill="#FF6B9D"/>
-        <circle cx="52" cy="36" r="3" fill="#1A1A2E"/><circle cx="78" cy="36" r="3" fill="#1A1A2E"/>
-        <line x1="65" y1="18" x2="65" y2="6" stroke="#1A1A2E" stroke-width="3" stroke-linecap="round"/>
-        <circle cx="65" cy="5" r="5" fill="#FFD93D"/>
-        <path d="M54 50 Q65 60 76 50" stroke="#FF6B9D" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-        <rect x="38" y="64" width="54" height="34" rx="10" fill="#FFE0EE"/>
-        <text x="65" y="87" text-anchor="middle" font-size="11" font-weight="900" fill="#FF6B9D" font-family="Pretendard">AI 비서</text>
-        <rect x="5" y="60" width="22" height="12" rx="6" fill="white"/><rect x="103" y="60" width="22" height="12" rx="6" fill="white"/>
-        <rect x="38" y="116" width="20" height="12" rx="6" fill="white"/><rect x="72" y="116" width="20" height="12" rx="6" fill="white"/>
-      </svg>
-    </div>
-    <div style="position:absolute;bottom:10%;left:5%;width:19%;aspect-ratio:1/1;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:13px;color:#FF6B9D;border:3px solid #FFD93D;line-height:1.3;">현장<br>대박<br>사례!</div>
-    <div style="position:absolute;top:47%;left:5%;font-size:18px;color:rgba(255,255,255,0.28);">★</div>
-    <div style="position:absolute;top:53%;left:9%;font-size:12px;color:rgba(255,255,255,0.18);">★</div>
-  </div>
-
-  <!-- ②  CASE 01 봄 단어 낚시 ─────────── -->
-  <div class="card-unit" style="background:#5CE8C8;">
-    <div class="deco" style="width:19%;height:19%;background:rgba(255,255,255,0.18);top:-5%;right:-3%;"></div>
-    <div class="deco" style="width:7%;height:7%;background:#FFD93D;bottom:13%;left:5%;opacity:.85;"></div>
-    <div class="deco" style="width:2.5%;height:2.5%;background:#FF6B9D;top:13%;left:10%;"></div>
-    <div class="kb-badge" style="top:4.5%;left:4.5%;color:#5CE8C8;font-size:10px;">CASE 01 · AI 비서 활용</div>
-    <div style="position:absolute;top:11%;left:5%;right:5%;">
-      <div style="font-size:clamp(28px,8.5%,52px);font-weight:800;color:#1A1A2E;line-height:1.04;letter-spacing:-0.03em;margin-bottom:1.5%;">봄 단어<br>낚시 놀이 🎣</div>
-      <div style="font-size:11px;font-weight:600;color:rgba(26,26,46,0.6);">AI 비서 한 마디로 수업 아이디어 완성!</div>
-    </div>
-    <div style="position:absolute;top:40%;right:5%;background:#1A1A2E;color:white;border-radius:14px 14px 4px 14px;padding:10px 14px;max-width:32%;">
-      <div style="font-size:11px;font-weight:600;line-height:1.55;">"킨더보드 잘쓴 노하우 칭찬합니다!" 👏</div>
-    </div>
-    <div style="position:absolute;bottom:4.5%;left:5%;right:5%;display:flex;flex-direction:column;gap:1.5%;">
-      <div class="wcard" style="display:flex;align-items:center;gap:10px;">
-        <div class="sc" style="background:#5CE8C8;">1</div>
-        <div><div style="font-size:12px;font-weight:800;color:#1A1A2E;">"봄 단어 낚시 놀이 제안해줘!"</div><div style="font-size:10px;color:#666;margin-top:2px;">AI 비서 질문 하나로 아이디어 즉시 획득</div></div>
-      </div>
-      <div class="wcard" style="display:flex;align-items:center;gap:10px;">
-        <div class="sc" style="background:#FF6B9D;">2</div>
-        <div><div style="font-size:12px;font-weight:800;color:#1A1A2E;">AI 카드 만들기로 단어 카드 제작</div><div style="font-size:10px;color:#666;margin-top:2px;">봄 글자 카드를 직접 뽑아서 수업에 활용</div></div>
-      </div>
-      <div class="wcard" style="display:flex;align-items:center;gap:10px;">
-        <div class="sc" style="background:#FFD93D;color:#1A1A2E;">3</div>
-        <div><div style="font-size:12px;font-weight:800;color:#1A1A2E;">아이들이 봄 글자에 줄을 서요! 🌸</div><div style="font-size:10px;color:#666;margin-top:2px;">예상 밖의 폭발적인 참여 반응 🎉</div></div>
-      </div>
+<!-- ══ 팀 선택 화면 ══ -->
+<div id="screen-login" class="screen active">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#FF6B9D22 0%,#A29BFE22 50%,#5CE8C822 100%);padding:24px;">
+    <div class="login-box">
+      <div class="login-logo">🌸 KINDERBOARD 2026</div>
+      <div class="login-title">AI 비서 베스트 사례<br>카드 작성하기</div>
+      <div class="login-desc">우리 팀을 선택해 카드를 작성하세요.<br>작성한 내용은 자동으로 저장돼요.</div>
+      <div class="team-grid" id="team-grid"><!-- JS로 생성 --></div>
+      <a class="admin-link" onclick="showAdminLogin()">관리자 화면 보기</a>
     </div>
   </div>
+</div>
 
-  <!-- ③  CASE 02·03 ────────────────────── -->
-  <div class="card-unit" style="background:#FFD93D;">
-    <div class="deco" style="width:14%;height:14%;background:rgba(255,255,255,0.2);bottom:-2%;right:-2%;"></div>
-    <div class="deco" style="width:9%;height:9%;background:#FF7043;top:4%;right:5%;opacity:.85;"></div>
-    <div style="position:absolute;top:17%;right:8%;font-size:20px;color:rgba(26,26,46,0.18);">★</div>
-    <div class="deco" style="width:3%;height:3%;background:#5CE8C8;top:12%;left:5%;"></div>
-    <div class="kb-badge" style="top:4.5%;left:4.5%;color:#B89800;font-size:10px;">CASE 02 · 03 · AI 비서 활용</div>
-    <div style="position:absolute;top:11%;left:5%;right:5%;">
-      <div style="font-size:clamp(26px,7.5%,48px);font-weight:800;color:#1A1A2E;line-height:1.07;letter-spacing:-0.02em;margin-bottom:2%;">AI로 만든<br>수업 자료들 🌍📚</div>
-    </div>
-    <div style="position:absolute;top:42%;left:5%;right:5%;display:grid;grid-template-columns:1fr 1fr;gap:2.5%;">
-      <div class="wcard" style="text-align:center;padding:14px 10px;">
-        <svg width="52" height="52" viewBox="0 0 60 60" fill="none" style="margin-bottom:8px;">
-          <circle cx="30" cy="30" r="28" fill="#5CE8C8"/>
-          <ellipse cx="22" cy="26" rx="10" ry="8" fill="#6BCB77"/><ellipse cx="38" cy="34" rx="9" ry="7" fill="#6BCB77"/><ellipse cx="30" cy="18" rx="6" ry="5" fill="#6BCB77"/>
-          <circle cx="22" cy="30" r="2.5" fill="#1A1A2E"/><circle cx="38" cy="30" r="2.5" fill="#1A1A2E"/>
-          <path d="M24 38 Q30 44 36 38" stroke="#1A1A2E" stroke-width="2" stroke-linecap="round" fill="none"/>
-          <circle cx="18" cy="34" r="3" fill="#FF6B9D" opacity=".4"/><circle cx="42" cy="34" r="3" fill="#FF6B9D" opacity=".4"/>
-        </svg>
-        <div style="font-size:13px;font-weight:800;color:#1A1A2E;margin-bottom:4px;line-height:1.3;">3D 지구<br>캐릭터 제작</div>
-        <div style="font-size:10px;color:#555;line-height:1.5;">"지켜주고싶게 생긴 지구!" 아이들이 환경보호를 다짐 💚</div>
-      </div>
-      <div class="wcard" style="text-align:center;padding:14px 10px;">
-        <svg width="52" height="52" viewBox="0 0 60 60" fill="none" style="margin-bottom:8px;">
-          <rect x="10" y="12" width="36" height="38" rx="6" fill="#A29BFE"/><rect x="10" y="12" width="6" height="38" rx="3" fill="#7B6FD4"/>
-          <rect x="18" y="20" width="22" height="3" rx="1.5" fill="white" opacity=".85"/><rect x="18" y="27" width="16" height="2.5" rx="1.25" fill="white" opacity=".65"/>
-          <circle cx="29" cy="44" r="5" fill="#FFD93D"/>
-          <path d="M27 44 L28.5 46 L32 42" stroke="#1A1A2E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <div style="font-size:13px;font-weight:800;color:#1A1A2E;margin-bottom:4px;line-height:1.3;">AI 동화책<br>스토리북</div>
-        <div style="font-size:10px;color:#555;line-height:1.5;">꿀벌 스토리북 → 야외 신체활동으로 확장! 🐝</div>
-      </div>
-    </div>
-    <div style="position:absolute;bottom:4%;left:5%;right:5%;background:#1A1A2E;border-radius:14px;padding:11px 16px;">
-      <div style="font-size:11px;color:white;font-weight:600;line-height:1.65;">"간단하고 캐릭터가 귀여워서 아이들이 정말 좋아했어요! AI 동화책을 이렇게 쉽게 만들 수 있다니 최고예요 =)"</div>
-    </div>
+<!-- ══ 팀 작성 화면 ══ -->
+<div id="screen-team" class="screen">
+  <div class="team-header">
+    <div class="header-logo">🌸 KINDERBOARD</div>
+    <div class="header-sep">|</div>
+    <div class="header-team-label" id="header-team-name"></div>
+    <div class="save-status offline" id="save-status">● 연결 중</div>
+    <button class="header-logout" onclick="logout()">← 팀 선택</button>
   </div>
 
-  <!-- ④  CASE 04·05 ────────────────────── -->
-  <div class="card-unit" style="background:#A29BFE;">
-    <div class="deco" style="width:20%;height:20%;background:rgba(255,255,255,0.13);top:-7%;left:-5%;"></div>
-    <div class="deco" style="width:11%;height:11%;background:#FFD93D;bottom:4%;right:-2%;opacity:.6;"></div>
-    <div class="deco" style="width:2.5%;height:2.5%;background:#FF6B9D;top:36%;left:5%;"></div>
-    <div class="kb-badge" style="top:4.5%;left:4.5%;color:#6B64D4;font-size:10px;">CASE 04 · 05 · AI 비서 활용</div>
-    <div style="position:absolute;top:11%;left:5%;right:5%;">
-      <div style="font-size:clamp(26px,7.8%,50px);font-weight:800;color:white;line-height:1.04;letter-spacing:-0.03em;margin-bottom:1.5%;">봄꽃 메뉴판<br>&amp; 컬러링 🌸🎨</div>
-      <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.75);">교실 놀이를 더 풍성하게!</div>
-    </div>
-    <div style="position:absolute;bottom:4.5%;left:5%;right:5%;display:flex;flex-direction:column;gap:1.8%;">
-      <div class="wcard" style="display:flex;align-items:flex-start;gap:9px;">
-        <div style="width:36px;height:36px;border-radius:11px;background:#FFD93D;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🌺</div>
-        <div><div style="font-size:12px;font-weight:800;color:#1A1A2E;">봄꽃 메뉴판 + 봄곤충 한글 카드</div><div style="font-size:10px;color:#555;line-height:1.5;margin-top:2px;">개나리·벚꽃·진달래 메뉴판 제작 → 가게 놀이로 확장!</div></div>
-      </div>
-      <div class="wcard" style="display:flex;align-items:flex-start;gap:9px;">
-        <div style="width:36px;height:36px;border-radius:11px;background:#5CE8C8;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🖍️</div>
-        <div><div style="font-size:12px;font-weight:800;color:#1A1A2E;">아이 맞춤 컬러링 제작</div><div style="font-size:10px;color:#555;line-height:1.5;margin-top:2px;">"AI가 내 맘을 알고 만들어줘서 신기해요!" — 4세 여아 🥹</div></div>
-      </div>
-      <div class="wcard" style="display:flex;align-items:flex-start;gap:9px;">
-        <div style="width:36px;height:36px;border-radius:11px;background:#FF6B9D;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">♻️</div>
-        <div><div style="font-size:12px;font-weight:800;color:#1A1A2E;">재활용 홍보 포스터</div><div style="font-size:10px;color:#555;line-height:1.5;margin-top:2px;">우유갑이 휴지가 되는 재활용 포스터 즉시 완성!</div></div>
-      </div>
-    </div>
-  </div>
+  <div style="padding:24px 0 0;">
+    <div id="full-canvas">
 
-  <!-- ⑤  CTA ─────────────────────────────── -->
-  <div class="card-unit" style="background:#1A1A2E;">
-    <div class="deco" style="width:38%;height:38%;background:rgba(90,15,45,0.5);top:-15%;right:-10%;"></div>
-    <div class="deco" style="width:20%;height:20%;background:rgba(0,55,45,0.5);bottom:-7%;left:-5%;"></div>
-    <div class="deco" style="width:4%;height:4%;background:#FFD93D;top:15%;left:11%;"></div>
-    <div class="deco" style="width:2.5%;height:2.5%;background:#FF6B9D;top:25%;right:14%;"></div>
-    <div style="position:absolute;top:5%;left:0;right:0;text-align:center;font-size:10px;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:3px;">KINDERBOARD 2026</div>
-    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8%;">
-      <svg width="70" height="70" viewBox="0 0 80 80" fill="none" style="margin-bottom:5%;">
-        <circle cx="40" cy="40" r="40" fill="#FFD93D"/>
-        <path d="M22 40 L34 52 L58 28" stroke="#1A1A2E" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <div style="font-size:clamp(26px,7%,44px);font-weight:800;color:white;text-align:center;line-height:1.1;letter-spacing:-0.02em;margin-bottom:3%;">선생님과<br>함께 만드는<br><span style="color:#FFD93D;">킨더보드</span> 🌱</div>
-      <div style="font-size:12px;color:rgba(255,255,255,.55);text-align:center;line-height:1.85;margin-bottom:5%;">재미있게 만든 수업 사례, 공유해 주세요!<br>학습공동체에서 더 많은 아이디어를 함께 나눠요.</div>
-      <div style="display:flex;gap:2%;flex-wrap:wrap;justify-content:center;">
-        <div style="background:#FF6B9D;border-radius:50px;padding:7px 16px;font-size:12px;font-weight:700;color:white;">AI 비서</div>
-        <div style="background:#5CE8C8;border-radius:50px;padding:7px 16px;font-size:12px;font-weight:700;color:#1A1A2E;">스토리북</div>
-        <div style="background:#FFD93D;border-radius:50px;padding:7px 16px;font-size:12px;font-weight:700;color:#1A1A2E;">놀이기록</div>
-        <div style="background:#A29BFE;border-radius:50px;padding:7px 16px;font-size:12px;font-weight:700;color:white;">컬러링</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ⑥  기본 사진 카드 ─────────────────── -->
-  <div class="card-wrap" id="pc-default">
-    <button class="del-btn" onclick="removeCard(this)">✕</button>
-    <div class="card-unit" style="background:white;">
-      <div class="photo-inner">
-        <div class="pc-head">
-          <div class="pc-badge-wrap" style="background:#5CE8C8;">
-            <input type="text" value="CASE 01" placeholder="CASE" style="color:#1A1A2E;" class="pc-badge-input">
+      <!-- ① 표지 -->
+      <div class="card-group">
+        <div class="card-unit" id="cc1" style="background:#FF6B9D;">
+          <div class="deco" style="width:17%;height:17%;background:rgba(255,255,255,0.18);top:-3%;left:-3%;"></div>
+          <div class="deco" style="width:9%;height:9%;background:rgba(255,255,255,0.13);bottom:8%;right:-2%;"></div>
+          <div class="deco" style="width:3.2%;height:3.2%;background:#FFD93D;top:9%;left:21%;"></div>
+          <div class="deco" style="width:2.2%;height:2.2%;background:#FFD93D;bottom:22%;left:10%;"></div>
+          <div class="kb-badge" style="top:4.5%;left:4.5%;font-size:10px;color:#FF6B9D;">🌸 KINDERBOARD</div>
+          <div style="position:absolute;top:4.5%;right:4.5%;font-size:10px;font-weight:700;color:rgba(255,255,255,0.55);letter-spacing:2px;">2026</div>
+          <div style="position:absolute;top:13%;left:6%;right:6%;">
+            <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.82);margin-bottom:1%;">현장 교사들의 생생 리얼 사례</div>
+            <div style="font-size:clamp(32px,9.5%,56px);font-weight:800;color:white;line-height:1.01;letter-spacing:-0.04em;">AI 비서<br>베스트<br>수업 사례</div>
           </div>
-          <div class="pc-fields">
-            <input type="text" class="f-title" placeholder="제목을 입력하세요" value="꽃씨 동요판 만들기">
-            <input type="text" class="f-team" placeholder="팀 이름을 입력하세요 (예: 햇살반)" value="킨더보드 PLC 1차">
+          <div style="position:absolute;bottom:11%;right:5%;">
+            <svg width="126" height="126" viewBox="0 0 130 130" fill="none"><rect x="25" y="50" width="80" height="70" rx="18" fill="white"/><rect x="38" y="18" width="54" height="42" rx="14" fill="white"/><circle cx="52" cy="36" r="7" fill="#FF6B9D"/><circle cx="78" cy="36" r="7" fill="#FF6B9D"/><circle cx="52" cy="36" r="3" fill="#1A1A2E"/><circle cx="78" cy="36" r="3" fill="#1A1A2E"/><line x1="65" y1="18" x2="65" y2="6" stroke="#1A1A2E" stroke-width="3" stroke-linecap="round"/><circle cx="65" cy="5" r="5" fill="#FFD93D"/><path d="M54 50 Q65 60 76 50" stroke="#FF6B9D" stroke-width="2.5" stroke-linecap="round" fill="none"/><rect x="38" y="64" width="54" height="34" rx="10" fill="#FFE0EE"/><text x="65" y="87" text-anchor="middle" font-size="11" font-weight="900" fill="#FF6B9D" font-family="Pretendard">AI 비서</text><rect x="5" y="60" width="22" height="12" rx="6" fill="white"/><rect x="103" y="60" width="22" height="12" rx="6" fill="white"/><rect x="38" y="116" width="20" height="12" rx="6" fill="white"/><rect x="72" y="116" width="20" height="12" rx="6" fill="white"/></svg>
+          </div>
+          <div style="position:absolute;bottom:10%;left:5%;width:19%;aspect-ratio:1/1;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:13px;color:#FF6B9D;border:3px solid #FFD93D;line-height:1.3;">현장<br>대박<br>사례!</div>
+          <div style="position:absolute;top:47%;left:5%;font-size:18px;color:rgba(255,255,255,0.28);">★</div>
+        </div>
+        <button class="card-save-btn" onclick="saveCase('cc1','01_표지')">💾 이 카드 저장</button>
+      </div>
+
+      <!-- ② CASE 01 -->
+      <div class="card-group">
+        <div class="card-unit" id="cc2" style="background:#5CE8C8;">
+          <div class="deco" style="width:19%;height:19%;background:rgba(255,255,255,0.18);top:-5%;right:-3%;"></div>
+          <div class="deco" style="width:7%;height:7%;background:#FFD93D;bottom:13%;left:5%;opacity:.85;"></div>
+          <div class="kb-badge" style="top:4.5%;left:4.5%;color:#5CE8C8;font-size:10px;">CASE 01 · AI 비서 활용</div>
+          <div style="position:absolute;top:11%;left:5%;right:5%;">
+            <div style="font-size:clamp(28px,8.5%,52px);font-weight:800;color:#1A1A2E;line-height:1.04;letter-spacing:-0.03em;margin-bottom:1.5%;">봄 단어<br>낚시 놀이 🎣</div>
+            <div style="font-size:11px;font-weight:600;color:rgba(26,26,46,0.6);">AI 비서 한 마디로 수업 아이디어 완성!</div>
+          </div>
+          <div style="position:absolute;top:40%;right:5%;background:#1A1A2E;color:white;border-radius:14px 14px 4px 14px;padding:10px 14px;max-width:32%;"><div style="font-size:11px;font-weight:600;line-height:1.55;">"킨더보드 잘쓴 노하우 칭찬합니다!" 👏</div></div>
+          <div style="position:absolute;bottom:4.5%;left:5%;right:5%;display:flex;flex-direction:column;gap:1.5%;">
+            <div class="wcard" style="display:flex;align-items:center;gap:10px;"><div class="sc" style="background:#5CE8C8;">1</div><div><div style="font-size:12px;font-weight:800;color:#1A1A2E;">"봄 단어 낚시 놀이 제안해줘!"</div><div style="font-size:10px;color:#666;margin-top:2px;">AI 비서 질문 하나로 아이디어 즉시 획득</div></div></div>
+            <div class="wcard" style="display:flex;align-items:center;gap:10px;"><div class="sc" style="background:#FF6B9D;">2</div><div><div style="font-size:12px;font-weight:800;color:#1A1A2E;">AI 카드 만들기로 단어 카드 제작</div><div style="font-size:10px;color:#666;margin-top:2px;">봄 글자 카드를 직접 뽑아서 수업에 활용</div></div></div>
+            <div class="wcard" style="display:flex;align-items:center;gap:10px;"><div class="sc" style="background:#FFD93D;color:#1A1A2E;">3</div><div><div style="font-size:12px;font-weight:800;color:#1A1A2E;">아이들이 봄 글자에 줄을 서요! 🌸</div><div style="font-size:10px;color:#666;margin-top:2px;">예상 밖의 폭발적인 참여 반응 🎉</div></div></div>
           </div>
         </div>
-        <div class="photo-body">
-          <div class="slot" style="border:2px dashed #5CE8C8;background:#F5FFFC;" id="slot-default">
-            <input type="file" accept="image/*" onchange="loadImage(this,'#5CE8C8')">
-            <div class="slot-inner">
-              <div class="slot-icon" style="background:#E0FAF3;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="3" stroke="#5CE8C8" stroke-width="2"/><circle cx="12" cy="12" r="3.5" stroke="#5CE8C8" stroke-width="2"/><circle cx="17.5" cy="7.5" r="1.2" fill="#5CE8C8"/></svg>
-              </div>
-              <div class="slot-text">📷 클릭해서 사진 업로드</div>
-              <div class="slot-sub">JPG · PNG · 비율 그대로 유지돼요</div>
+        <button class="card-save-btn" onclick="saveCase('cc2','02_CASE01')">💾 이 카드 저장</button>
+      </div>
+
+      <!-- ③ CASE 02·03 -->
+      <div class="card-group">
+        <div class="card-unit" id="cc3" style="background:#FFD93D;">
+          <div class="deco" style="width:14%;height:14%;background:rgba(255,255,255,0.2);bottom:-2%;right:-2%;"></div>
+          <div class="deco" style="width:9%;height:9%;background:#FF7043;top:4%;right:5%;opacity:.85;"></div>
+          <div style="position:absolute;top:17%;right:8%;font-size:20px;color:rgba(26,26,46,0.18);">★</div>
+          <div class="kb-badge" style="top:4.5%;left:4.5%;color:#B89800;font-size:10px;">CASE 02 · 03 · AI 비서 활용</div>
+          <div style="position:absolute;top:11%;left:5%;right:5%;"><div style="font-size:clamp(26px,7.5%,48px);font-weight:800;color:#1A1A2E;line-height:1.07;letter-spacing:-0.02em;margin-bottom:2%;">AI로 만든<br>수업 자료들 🌍📚</div></div>
+          <div style="position:absolute;top:42%;left:5%;right:5%;display:grid;grid-template-columns:1fr 1fr;gap:2.5%;">
+            <div class="wcard" style="text-align:center;padding:14px 10px;"><svg width="52" height="52" viewBox="0 0 60 60" fill="none" style="margin-bottom:8px;"><circle cx="30" cy="30" r="28" fill="#5CE8C8"/><ellipse cx="22" cy="26" rx="10" ry="8" fill="#6BCB77"/><ellipse cx="38" cy="34" rx="9" ry="7" fill="#6BCB77"/><ellipse cx="30" cy="18" rx="6" ry="5" fill="#6BCB77"/><circle cx="22" cy="30" r="2.5" fill="#1A1A2E"/><circle cx="38" cy="30" r="2.5" fill="#1A1A2E"/><path d="M24 38 Q30 44 36 38" stroke="#1A1A2E" stroke-width="2" stroke-linecap="round" fill="none"/><circle cx="18" cy="34" r="3" fill="#FF6B9D" opacity=".4"/><circle cx="42" cy="34" r="3" fill="#FF6B9D" opacity=".4"/></svg><div style="font-size:13px;font-weight:800;color:#1A1A2E;margin-bottom:4px;line-height:1.3;">3D 지구<br>캐릭터 제작</div><div style="font-size:10px;color:#555;line-height:1.5;">아이들이 환경보호를 다짐 💚</div></div>
+            <div class="wcard" style="text-align:center;padding:14px 10px;"><svg width="52" height="52" viewBox="0 0 60 60" fill="none" style="margin-bottom:8px;"><rect x="10" y="12" width="36" height="38" rx="6" fill="#A29BFE"/><rect x="10" y="12" width="6" height="38" rx="3" fill="#7B6FD4"/><rect x="18" y="20" width="22" height="3" rx="1.5" fill="white" opacity=".85"/><rect x="18" y="27" width="16" height="2.5" rx="1.25" fill="white" opacity=".65"/><circle cx="29" cy="44" r="5" fill="#FFD93D"/><path d="M27 44 L28.5 46 L32 42" stroke="#1A1A2E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><div style="font-size:13px;font-weight:800;color:#1A1A2E;margin-bottom:4px;line-height:1.3;">AI 동화책<br>스토리북</div><div style="font-size:10px;color:#555;line-height:1.5;">꿀벌 스토리북 → 야외 활동으로 확장! 🐝</div></div>
+          </div>
+          <div style="position:absolute;bottom:4%;left:5%;right:5%;background:#1A1A2E;border-radius:14px;padding:11px 16px;"><div style="font-size:11px;color:white;font-weight:600;line-height:1.65;">"간단하고 귀여워서 아이들이 정말 좋아했어요! =)"</div></div>
+        </div>
+        <button class="card-save-btn" onclick="saveCase('cc3','03_CASE02_03')">💾 이 카드 저장</button>
+      </div>
+
+      <!-- ④ CASE 04·05 -->
+      <div class="card-group">
+        <div class="card-unit" id="cc4" style="background:#A29BFE;">
+          <div class="deco" style="width:20%;height:20%;background:rgba(255,255,255,0.13);top:-7%;left:-5%;"></div>
+          <div class="deco" style="width:11%;height:11%;background:#FFD93D;bottom:4%;right:-2%;opacity:.6;"></div>
+          <div class="kb-badge" style="top:4.5%;left:4.5%;color:#6B64D4;font-size:10px;">CASE 04 · 05 · AI 비서 활용</div>
+          <div style="position:absolute;top:11%;left:5%;right:5%;"><div style="font-size:clamp(26px,7.8%,50px);font-weight:800;color:white;line-height:1.04;letter-spacing:-0.03em;margin-bottom:1.5%;">봄꽃 메뉴판<br>&amp; 컬러링 🌸🎨</div><div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.75);">교실 놀이를 더 풍성하게!</div></div>
+          <div style="position:absolute;bottom:4.5%;left:5%;right:5%;display:flex;flex-direction:column;gap:1.8%;">
+            <div class="wcard" style="display:flex;align-items:flex-start;gap:9px;"><div style="width:36px;height:36px;border-radius:11px;background:#FFD93D;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🌺</div><div><div style="font-size:12px;font-weight:800;color:#1A1A2E;">봄꽃 메뉴판 + 봄곤충 한글 카드</div><div style="font-size:10px;color:#555;line-height:1.5;margin-top:2px;">개나리·벚꽃·진달래 메뉴판 → 가게 놀이 확장!</div></div></div>
+            <div class="wcard" style="display:flex;align-items:flex-start;gap:9px;"><div style="width:36px;height:36px;border-radius:11px;background:#5CE8C8;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🖍️</div><div><div style="font-size:12px;font-weight:800;color:#1A1A2E;">아이 맞춤 컬러링 제작</div><div style="font-size:10px;color:#555;line-height:1.5;margin-top:2px;">"AI가 내 맘을 알고 만들어줘서 신기해요!" 🥹</div></div></div>
+            <div class="wcard" style="display:flex;align-items:flex-start;gap:9px;"><div style="width:36px;height:36px;border-radius:11px;background:#FF6B9D;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">♻️</div><div><div style="font-size:12px;font-weight:800;color:#1A1A2E;">재활용 홍보 포스터</div><div style="font-size:10px;color:#555;line-height:1.5;margin-top:2px;">우유갑이 휴지가 되는 재활용 포스터 즉시 완성!</div></div></div>
+          </div>
+        </div>
+        <button class="card-save-btn" onclick="saveCase('cc4','04_CASE04_05')">💾 이 카드 저장</button>
+      </div>
+
+      <!-- ⑤ CTA -->
+      <div class="card-group">
+        <div class="card-unit" id="cc5" style="background:#1A1A2E;">
+          <div class="deco" style="width:38%;height:38%;background:rgba(90,15,45,0.5);top:-15%;right:-10%;"></div>
+          <div class="deco" style="width:20%;height:20%;background:rgba(0,55,45,0.5);bottom:-7%;left:-5%;"></div>
+          <div class="deco" style="width:4%;height:4%;background:#FFD93D;top:15%;left:11%;"></div>
+          <div class="deco" style="width:2.5%;height:2.5%;background:#FF6B9D;top:25%;right:14%;"></div>
+          <div style="position:absolute;top:5%;left:0;right:0;text-align:center;font-size:10px;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:3px;">KINDERBOARD 2026</div>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8%;">
+            <svg width="70" height="70" viewBox="0 0 80 80" fill="none" style="margin-bottom:5%;"><circle cx="40" cy="40" r="40" fill="#FFD93D"/><path d="M22 40 L34 52 L58 28" stroke="#1A1A2E" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div style="font-size:clamp(26px,7%,44px);font-weight:800;color:white;text-align:center;line-height:1.1;letter-spacing:-0.02em;margin-bottom:3%;">선생님과<br>함께 만드는<br><span style="color:#FFD93D;">킨더보드</span> 🌱</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.55);text-align:center;line-height:1.85;margin-bottom:5%;">재미있게 만든 수업 사례, 공유해 주세요!<br>학습공동체에서 더 많은 아이디어를 함께 나눠요.</div>
+            <div style="display:flex;gap:2%;flex-wrap:wrap;justify-content:center;">
+              <div style="background:#FF6B9D;border-radius:50px;padding:7px 16px;font-size:12px;font-weight:700;color:white;">AI 비서</div>
+              <div style="background:#5CE8C8;border-radius:50px;padding:7px 16px;font-size:12px;font-weight:700;color:#1A1A2E;">스토리북</div>
+              <div style="background:#FFD93D;border-radius:50px;padding:7px 16px;font-size:12px;font-weight:700;color:#1A1A2E;">놀이기록</div>
+              <div style="background:#A29BFE;border-radius:50px;padding:7px 16px;font-size:12px;font-weight:700;color:white;">컬러링</div>
             </div>
           </div>
         </div>
-        <div class="comment-wrap">
-          <div class="cap-row">
-            <div class="cap-line"></div>
-            <span class="cap-label">✏️ 한 줄 코멘트</span>
-            <div class="cap-line"></div>
-          </div>
-          <textarea class="f-comment" placeholder="수업 소감이나 아이들 반응을 자유롭게 입력하세요 :)" oninput="autoResize(this)"></textarea>
+        <button class="card-save-btn" onclick="saveCase('cc5','05_마무리')">💾 이 카드 저장</button>
+      </div>
+
+      <!-- 사진 카드: JS가 동적 삽입 -->
+      <div id="add-wrap">
+        <div class="add-card-btn" onclick="showPicker()">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><line x1="12" y1="8" x2="12" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          사진 첨부 카드 추가하기
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- 카드 추가 버튼 -->
-  <div id="add-wrap">
-    <div class="add-card-btn" onclick="showPicker()">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-        <line x1="12" y1="8" x2="12" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-      사진 첨부 카드 추가하기
+    <div id="controls">
+      <button class="btn-all" id="dl-all" onclick="saveAll('jpg')">🖼️ 전체 한 장으로 저장 (JPG)</button>
+      <button class="btn-all-sub" onclick="saveAll('png')">PNG로 저장</button>
     </div>
   </div>
+</div>
 
-</div><!-- /full-canvas -->
+<!-- ══ 관리자 화면 ══ -->
+<div id="screen-admin" class="screen">
+  <div class="admin-header">
+    <div class="admin-header-title">🛠 관리자 — 팀 제출 현황</div>
+    <button class="admin-hbtn" onclick="loadAdminData()">새로고침</button>
+    <button class="admin-hbtn" onclick="showScreen('screen-login')">닫기</button>
+  </div>
+  <div class="admin-body">
+    <div class="admin-summary">
+      <div class="admin-stat"><div class="admin-stat-num" id="stat-total">—</div><div class="admin-stat-label">전체 팀</div></div>
+      <div class="admin-stat"><div class="admin-stat-num" id="stat-done">—</div><div class="admin-stat-label">작성 완료</div></div>
+      <div class="admin-stat"><div class="admin-stat-num" id="stat-cards">—</div><div class="admin-stat-label">총 카드 수</div></div>
+    </div>
+    <div id="team-list" class="team-grid-list"><div class="admin-empty">불러오는 중...</div></div>
+  </div>
+</div>
 
-<!-- 컬러 피커 모달 -->
+<!-- 컬러 피커 -->
 <div class="cpk-wrap" id="picker">
   <div class="cpk-box">
     <div class="cpk-title">레이블 컬러 선택</div>
@@ -494,198 +341,461 @@ body{
   </div>
 </div>
 
-<!-- 저장 컨트롤 -->
-<div id="controls">
-  <button class="btn-main" id="dl-btn" onclick="save('jpg')">🖼️ 전체 JPG로 저장</button>
-  <button class="btn-sub" onclick="save('png')">PNG로 저장</button>
+<!-- 미리보기 모달 -->
+<div class="modal-wrap" id="modal-wrap">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-title"></div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="preview-cards" id="preview-cards"></div>
+  </div>
 </div>
-<div id="save-tip">텍스트·사진 입력 후 저장하면 그대로 이미지에 반영돼요</div>
-
-<style>
-/* pc-badge-input 공통 */
-.pc-badge-input{
-  font-size:10px;font-weight:800;letter-spacing:1.5px;
-  border:none;outline:none;
-  padding:5px 13px;
-  text-align:center;
-  font-family:'Pretendard',sans-serif;
-  background:transparent;
-  display:block;
-  min-width:68px;
-  cursor:text;
-}
-</style>
 
 <script>
-var selC='#5CE8C8', selT='#1A1A2E';
+/* ════ 설정 ════ */
+var SB  = 'https://uwilpvbpramkbitwiwuw.supabase.co';
+var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3aWxwdmJwcmFta2JpdHdpd3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMzcxNTgsImV4cCI6MjA5MDgxMzE1OH0.Iq0E4zv5BeszWMszDpFB8dstnyGxr8HyKdYERM3Ee2Y';
+var HDR = {'Content-Type':'application/json','apikey':KEY,'Authorization':'Bearer '+KEY};
+var ADMIN_CODE = 'kindboard2026';
 
-/* ─── textarea 자동 높이 ─ */
-function autoResize(el){
-  el.style.height='auto';
-  el.style.height=el.scrollHeight+'px';
+/* ── 팀 목록 (여기서 수정) ── */
+var TEAMS = [
+  {name:'최강골든팀', color:'#FFD93D'},
+  {name:'야너도팀',   color:'#FF6B9D'},
+  {name:'예티팀',     color:'#5CE8C8'},
+  {name:'킨더팀',     color:'#A29BFE'},
+  {name:'보드팀',     color:'#6BCB77'},
+  {name:'산새쌤팀',   color:'#FF7043'},
+  {name:'강서팀',     color:'#4FC3F7'},
+  {name:'겨쿨쌤팀',   color:'#FF6B9D'},
+  {name:'리드팀',     color:'#A29BFE'},
+];
+
+/* ════ 상태 ════ */
+var currentTeam = '';
+var teamCards   = [];
+var selC = '#5CE8C8', selT = '#1A1A2E';
+var saveTimer = null;
+
+/* ════ 팀 버튼 렌더 ════ */
+function renderTeamButtons(){
+  var grid = document.getElementById('team-grid');
+  grid.innerHTML = '';
+  TEAMS.forEach(function(t){
+    var btn = document.createElement('button');
+    btn.className = 'team-btn';
+    btn.innerHTML =
+      '<div class="team-btn-avatar" style="background:'+t.color+';">'+
+        t.name.slice(0,1)+
+      '</div>'+
+      '<div class="team-btn-name">'+escH(t.name)+'</div>'+
+      '<div class="team-btn-sub">클릭해서 입장</div>';
+    btn.addEventListener('click', function(){ enterTeam(t.name); });
+    grid.appendChild(btn);
+  });
 }
-document.querySelectorAll('.f-comment').forEach(function(t){
-  autoResize(t);
-  t.addEventListener('input',function(){autoResize(this);});
-});
+renderTeamButtons();
 
-/* ─── 사진 업로드 ─────────── */
-function loadImage(input, borderColor){
-  var slot = input.closest('.slot');
-  var file = input.files[0]; if(!file) return;
-  var reader = new FileReader();
-  reader.onload = function(e){
-    /* 기존 이미지 제거 */
-    var old = slot.querySelector('.photo-preview'); if(old) old.remove();
-    /* slot-inner 숨기기 */
-    var inner = slot.querySelector('.slot-inner');
-    if(inner) inner.style.display='none';
-    /* 이미지 추가 (object-fit:contain) */
-    var img = document.createElement('img');
-    img.className = 'photo-preview';
-    img.src = e.target.result;
-    slot.appendChild(img);
-    /* 테두리 완료 색상 */
-    slot.style.border = '2px solid #4CAF50';
-    /* file input을 맨 앞 z-index로 유지 → 클릭 시 교체 가능 */
-    input.style.zIndex = '6';
+/* ════ 팀 입장 ════ */
+function enterTeam(name){
+  currentTeam = name;
+  teamCards   = [makeCard()];             /* 기본 카드 먼저 표시 */
+  document.getElementById('header-team-name').textContent = name+'팀';
+  renderTeamCards();
+  showScreen('screen-team');
+  setSaveStatus('offline');
+  /* 백그라운드에서 DB 로드 */
+  loadFromDB(name);
+}
+
+async function loadFromDB(name){
+  try{
+    var res  = await fetch(SB+'/rest/v1/cardnews_submissions?team_name=eq.'+encodeURIComponent(name)+'&select=cards', {headers:HDR});
+    var data = await res.json();
+    if(Array.isArray(data) && data[0] && Array.isArray(data[0].cards) && data[0].cards.length>0){
+      teamCards = data[0].cards;
+      renderTeamCards();
+    }
+    setSaveStatus('saved');
+  }catch(e){
+    /* 오프라인 상태 유지 — 로컬에서 계속 작업 가능 */
+    setSaveStatus('offline');
+  }
+}
+
+function logout(){
+  if(saveTimer) clearTimeout(saveTimer);
+  currentTeam = ''; teamCards = [];
+  document.querySelectorAll('.team-card-wrap').forEach(function(el){el.remove();});
+  showScreen('screen-login');
+}
+
+/* ════ 화면 전환 ════ */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+}
+
+/* ════ 저장 상태 ════ */
+function setSaveStatus(s){
+  var el = document.getElementById('save-status');
+  el.className = 'save-status '+s;
+  var labels = {saved:'✓ 저장됨', saving:'저장 중...', offline:'● 오프라인', error:'⚠ 저장 실패'};
+  el.textContent = labels[s] || s;
+}
+
+/* ════ DB 저장 ════ */
+async function saveToDB(){
+  if(!currentTeam) return;
+  setSaveStatus('saving');
+  try{
+    var res = await fetch(SB+'/rest/v1/cardnews_submissions',{
+      method:'POST',
+      headers:Object.assign({},HDR,{'Prefer':'resolution=merge-duplicates,return=minimal'}),
+      body:JSON.stringify({team_name:currentTeam, cards:teamCards, updated_at:new Date().toISOString()})
+    });
+    setSaveStatus(res.ok ? 'saved' : 'error');
+  }catch(e){ setSaveStatus('offline'); }
+}
+
+function queueSave(){
+  setSaveStatus('saving');
+  if(saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(function(){
+    syncFromDOM();
+    saveToDB();
+  }, 1800);
+}
+
+/* ════ DOM → teamCards ════ */
+function syncFromDOM(){
+  document.querySelectorAll('.team-card-wrap').forEach(function(wrap){
+    var cid  = wrap.dataset.cardId;
+    var card = teamCards.find(function(c){return c.id===cid;});
+    if(!card) return;
+    var e;
+    e=wrap.querySelector('.pc-badge-input'); if(e) card.label=e.value;
+    e=wrap.querySelector('.f-title');        if(e) card.title=e.value;
+    e=wrap.querySelector('.f-team');         if(e) card.teamInfo=e.value;
+    e=wrap.querySelector('.f-comment');      if(e) card.comment=e.value;
+  });
+}
+
+/* ════ 카드 데이터 ════ */
+function makeCard(color, textColor){
+  return {
+    id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
+    label:'CASE', title:'', teamInfo:'', comment:'', photo:'',
+    color:color||'#5CE8C8', textColor:textColor||'#1A1A2E'
   };
-  reader.readAsDataURL(file);
 }
 
-/* ─── 카드 삭제 ─────────── */
-function removeCard(btn){
-  if(confirm('이 카드를 삭제할까요?')) btn.closest('.card-wrap').remove();
+/* ════ 카드 렌더링 ════ */
+function renderTeamCards(){
+  document.querySelectorAll('.team-card-wrap').forEach(function(el){el.remove();});
+  var addWrap = document.getElementById('add-wrap');
+  teamCards.forEach(function(card){
+    addWrap.parentNode.insertBefore(buildCardEl(card), addWrap);
+  });
 }
 
-/* ─── 컬러 피커 ─────────── */
-function showPicker(){ document.getElementById('picker').classList.add('show'); }
-function hidePicker(){ document.getElementById('picker').classList.remove('show'); }
-function pickSwatch(el){
-  document.querySelectorAll('.swatch').forEach(function(s){s.classList.remove('on');});
-  el.classList.add('on');
-  selC=el.dataset.c; selT=el.dataset.t;
+/* ════ 카드 DOM 생성 ════ */
+function buildCardEl(card){
+  var wrap = document.createElement('div');
+  wrap.className = 'card-wrap team-card-wrap';
+  wrap.dataset.cardId = card.id;
+
+  /* 삭제 버튼 */
+  var del = document.createElement('button');
+  del.className = 'del-btn'; del.textContent = '✕';
+  del.addEventListener('click', function(){ removeCard(card.id); });
+  wrap.appendChild(del);
+
+  /* 카드 */
+  var unit = document.createElement('div');
+  unit.className = 'card-unit'; unit.style.background = 'white';
+
+  var inner = document.createElement('div'); inner.className = 'photo-inner';
+
+  /* 헤더 */
+  var head = document.createElement('div'); head.className = 'pc-head';
+  var bWrap = document.createElement('div');
+  bWrap.className = 'pc-badge-wrap'; bWrap.style.background = card.color;
+  var bInp = document.createElement('input');
+  bInp.type='text'; bInp.className='pc-badge-input';
+  bInp.value=card.label||'CASE'; bInp.placeholder='CASE';
+  bInp.style.color=card.textColor;
+  bInp.addEventListener('input', queueSave);
+  bWrap.appendChild(bInp); head.appendChild(bWrap);
+
+  var fields = document.createElement('div'); fields.className='pc-fields';
+  var tInp = document.createElement('input');
+  tInp.type='text'; tInp.className='f-title';
+  tInp.value=card.title||''; tInp.placeholder='제목을 입력하세요';
+  tInp.addEventListener('input', queueSave); fields.appendChild(tInp);
+  var mInp = document.createElement('input');
+  mInp.type='text'; mInp.className='f-team';
+  mInp.value=card.teamInfo||''; mInp.placeholder='팀 이름을 입력하세요 (예: 햇살반)';
+  mInp.addEventListener('input', queueSave); fields.appendChild(mInp);
+  head.appendChild(fields); inner.appendChild(head);
+
+  /* 슬롯 */
+  var pb = document.createElement('div'); pb.className='photo-body';
+  var slot = document.createElement('div'); slot.className='slot';
+  slot.style.border='2px dashed '+card.color;
+  slot.style.background=card.color+'18';
+  if(card.photo) slot.style.border='2px solid #4CAF50';
+
+  var fi = document.createElement('input'); fi.type='file'; fi.accept='image/*';
+  fi.addEventListener('change', function(){ onPhotoUpload(this, card.id); });
+  slot.appendChild(fi);
+
+  if(card.photo){
+    var img = document.createElement('img'); img.className='photo-preview'; img.src=card.photo;
+    slot.appendChild(img);
+  } else {
+    var si = document.createElement('div'); si.className='slot-inner';
+    si.innerHTML=
+      '<div class="slot-icon" style="background:'+card.color+'30;">'+
+        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none">'+
+          '<rect x="3" y="5" width="18" height="14" rx="3" stroke="'+card.color+'" stroke-width="2"/>'+
+          '<circle cx="12" cy="12" r="3.5" stroke="'+card.color+'" stroke-width="2"/>'+
+          '<circle cx="17.5" cy="7.5" r="1.2" fill="'+card.color+'"/>'+
+        '</svg>'+
+      '</div>'+
+      '<div class="slot-text">📷 클릭해서 사진 업로드</div>'+
+      '<div class="slot-sub">JPG · PNG · 비율 그대로 유지돼요</div>';
+    slot.appendChild(si);
+  }
+  pb.appendChild(slot); inner.appendChild(pb);
+
+  /* 코멘트 */
+  var cw = document.createElement('div'); cw.className='comment-wrap';
+  cw.innerHTML='<div class="cap-row"><div class="cap-line"></div><span class="cap-label">✏️ 한 줄 코멘트</span><div class="cap-line"></div></div>';
+  var ta = document.createElement('textarea'); ta.className='f-comment';
+  ta.placeholder='수업 소감이나 아이들 반응을 자유롭게 입력하세요 :)';
+  ta.value=card.comment||'';
+  ta.addEventListener('input', function(){ autoResize(this); queueSave(); });
+  cw.appendChild(ta); inner.appendChild(cw);
+
+  unit.appendChild(inner); wrap.appendChild(unit);
+
+  /* 저장 버튼 */
+  var sb = document.createElement('button'); sb.className='card-save-btn'; sb.textContent='💾 이 카드 저장';
+  sb.addEventListener('click', function(){ savePhotoCard(this); });
+  wrap.appendChild(sb);
+
+  setTimeout(function(){ autoResize(ta); }, 0);
+  return wrap;
 }
 
-/* ─── 사진 카드 추가 ─────── */
+/* ════ 사진 업로드 ════ */
+async function onPhotoUpload(input, cardId){
+  var file=input.files[0]; if(!file) return;
+  var raw=await readFile(file);
+  var resized=await resizePhoto(raw, 700, 0.78);
+  var card=teamCards.find(function(c){return c.id===cardId;});
+  if(card) card.photo=resized;
+  var slot=input.closest('.slot');
+  var old=slot.querySelector('.photo-preview'); if(old) old.remove();
+  var si=slot.querySelector('.slot-inner'); if(si) si.style.display='none';
+  var img=document.createElement('img'); img.className='photo-preview'; img.src=resized;
+  slot.appendChild(img); slot.style.border='2px solid #4CAF50';
+  syncFromDOM(); saveToDB();
+}
+
+function readFile(f){ return new Promise(function(r){var rd=new FileReader();rd.onload=function(e){r(e.target.result);};rd.readAsDataURL(f);}); }
+function resizePhoto(src,mx,q){
+  return new Promise(function(r){
+    var img=new Image(); img.onload=function(){
+      var w=img.width,h=img.height; if(w>mx){h=Math.round(h*mx/w);w=mx;}
+      var c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);r(c.toDataURL('image/jpeg',q));
+    }; img.src=src;
+  });
+}
+
+/* ════ 카드 추가/삭제 ════ */
 function addCard(){
   hidePicker();
-  var wrap = document.createElement('div'); wrap.className='card-wrap';
-
-  var del = document.createElement('button'); del.className='del-btn'; del.textContent='✕';
-  del.onclick=function(){removeCard(this);}; wrap.appendChild(del);
-
-  var unit = document.createElement('div');
-  unit.className='card-unit'; unit.style.background='white';
-
-  var slotBg = selC+'18';
-  unit.innerHTML=`
-    <div class="photo-inner">
-      <div class="pc-head">
-        <div class="pc-badge-wrap" style="background:${selC};">
-          <input type="text" value="CASE" placeholder="CASE" class="pc-badge-input" style="color:${selT};">
-        </div>
-        <div class="pc-fields">
-          <input type="text" class="f-title" placeholder="제목을 입력하세요">
-          <input type="text" class="f-team" placeholder="팀 이름을 입력하세요 (예: 햇살반)">
-        </div>
-      </div>
-      <div class="photo-body">
-        <div class="slot" style="border:2px dashed ${selC};background:${slotBg};">
-          <input type="file" accept="image/*" onchange="loadImage(this,'${selC}')">
-          <div class="slot-inner">
-            <div class="slot-icon" style="background:${selC}30;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="3" stroke="${selC}" stroke-width="2"/><circle cx="12" cy="12" r="3.5" stroke="${selC}" stroke-width="2"/><circle cx="17.5" cy="7.5" r="1.2" fill="${selC}"/></svg>
-            </div>
-            <div class="slot-text">📷 클릭해서 사진 업로드</div>
-            <div class="slot-sub">JPG · PNG · 비율 그대로 유지돼요</div>
-          </div>
-        </div>
-      </div>
-      <div class="comment-wrap">
-        <div class="cap-row">
-          <div class="cap-line"></div><span class="cap-label">✏️ 한 줄 코멘트</span><div class="cap-line"></div>
-        </div>
-        <textarea class="f-comment" placeholder="수업 소감이나 아이들 반응을 자유롭게 입력하세요 :)" oninput="autoResize(this)"></textarea>
-      </div>
-    </div>`;
-
-  wrap.appendChild(unit);
-  document.getElementById('add-wrap').parentNode.insertBefore(wrap, document.getElementById('add-wrap'));
-
-  /* 새 textarea 자동 높이 적용 */
-  var newTA = unit.querySelector('.f-comment');
-  newTA.addEventListener('input',function(){autoResize(this);});
+  var card=makeCard(selC,selT); teamCards.push(card);
+  var aw=document.getElementById('add-wrap');
+  aw.parentNode.insertBefore(buildCardEl(card), aw);
+  syncFromDOM(); saveToDB();
+}
+function removeCard(id){
+  if(teamCards.length<=1){alert('카드가 최소 1장은 있어야 해요.');return;}
+  if(!confirm('이 카드를 삭제할까요?'))return;
+  teamCards=teamCards.filter(function(c){return c.id!==id;});
+  var w=document.querySelector('[data-card-id="'+id+'"]'); if(w)w.remove();
+  saveToDB();
 }
 
-/* ─── 저장 ───────────────── */
-function save(fmt){
-  /* 1. blur 해제 */
-  if(document.activeElement) document.activeElement.blur();
+/* ════ 컬러 피커 ════ */
+function showPicker(){document.getElementById('picker').classList.add('show');}
+function hidePicker(){document.getElementById('picker').classList.remove('show');}
+function pickSwatch(el){
+  document.querySelectorAll('.swatch').forEach(function(s){s.classList.remove('on');});
+  el.classList.add('on'); selC=el.dataset.c; selT=el.dataset.t;
+}
 
-  /* 2. 저장 전 UI 숨기기 */
-  var hideEls = ['edit-hint','controls','save-tip','picker'];
-  hideEls.forEach(function(id){
-    var el=document.getElementById(id); if(el) el.classList.add('save-hide');
-  });
-  document.querySelectorAll('.del-btn,.add-card-btn').forEach(function(b){b.classList.add('save-hide');});
-  document.getElementById('add-wrap').classList.add('save-hide');
+/* ════ 헬퍼 ════ */
+function autoResize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
+function escH(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
-  /* 3. 모든 input/textarea → div로 교체 (텍스트 캡처 보장) */
+function replaceInputs(scope){
   var reps=[];
-  document.querySelectorAll('.photo-inner input[type="text"], .photo-inner textarea, .photo-inner .pc-badge-input').forEach(function(inp){
-    var val = inp.value || '';
-    var isTa = inp.tagName==='TEXTAREA';
-    var div = document.createElement('div');
-    div.textContent = val;
-    var cs = window.getComputedStyle(inp);
-    div.style.cssText = [
-      'font-family:Pretendard,sans-serif',
-      'font-size:'+cs.fontSize,
-      'font-weight:'+cs.fontWeight,
-      'color:'+(val ? cs.color : '#CCCCCC'),
-      'padding:'+cs.padding,
-      'width:100%',
-      'display:block',
-      'line-height:'+cs.lineHeight,
-      'white-space:pre-wrap',
-      'word-break:break-word',
-      'border-radius:6px',
-      'background:transparent',
-      'box-sizing:border-box',
-    ].join(';');
-    inp.parentNode.insertBefore(div,inp);
-    inp.classList.add('save-hide');
+  scope.querySelectorAll('input[type="text"],textarea,.pc-badge-input').forEach(function(inp){
+    var val=inp.value||'';
+    var div=document.createElement('div'); div.textContent=val;
+    var cs=window.getComputedStyle(inp);
+    div.style.cssText='font-family:Pretendard,sans-serif;font-size:'+cs.fontSize+';font-weight:'+cs.fontWeight+
+      ';color:'+(val?cs.color:'#CCC')+';padding:'+cs.padding+';width:100%;display:block;'+
+      'line-height:'+cs.lineHeight+';white-space:pre-wrap;word-break:break-word;'+
+      'border-radius:6px;background:transparent;box-sizing:border-box;';
+    inp.parentNode.insertBefore(div,inp); inp.classList.add('sv-hide');
     reps.push({inp:inp,div:div});
   });
-
-  var btn=document.getElementById('dl-btn');
-  btn.disabled=true; btn.textContent='저장 중...';
-
-  setTimeout(function(){
-    html2canvas(document.getElementById('full-canvas'),{
-      scale:2, useCORS:true, allowTaint:true,
-      logging:false, backgroundColor:'#E8E8E8'
-    }).then(function(canvas){
-      var type=fmt==='png'?'image/png':'image/jpeg';
-      var ext =fmt==='png'?'.png':'.jpg';
-      var link=document.createElement('a');
-      link.download='kindboard_AI베스트사례_2026'+ext;
-      link.href=canvas.toDataURL(type,fmt==='png'?1:0.93);
-      link.click();
-    }).catch(function(e){ alert('저장 실패: '+e.message); })
-    .finally(function(){
-      /* 복원 */
-      reps.forEach(function(r){ r.div.remove(); r.inp.classList.remove('save-hide'); });
-      hideEls.forEach(function(id){
-        var el=document.getElementById(id); if(el) el.classList.remove('save-hide');
-      });
-      document.querySelectorAll('.del-btn,.add-card-btn').forEach(function(b){b.classList.remove('save-hide');});
-      document.getElementById('add-wrap').classList.remove('save-hide');
-      btn.disabled=false; btn.textContent='🖼️ 전체 JPG로 저장';
-    });
-  }, 200);
+  return reps;
 }
+function restoreInputs(reps){reps.forEach(function(r){r.div.remove();r.inp.classList.remove('sv-hide');});}
+
+/* ════ 케이스 카드 저장 ════ */
+function saveCase(id, name){
+  var el=document.getElementById(id); var btn=el.nextElementSibling;
+  btn.disabled=true; btn.textContent='저장 중...';
+  setTimeout(function(){
+    html2canvas(el,{scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:null})
+    .then(function(c){
+      var a=document.createElement('a'); a.download='kindboard_'+name+'.jpg';
+      a.href=c.toDataURL('image/jpeg',0.93); a.click();
+    }).catch(function(e){alert('저장 실패: '+e.message);})
+    .finally(function(){btn.disabled=false; btn.textContent='💾 이 카드 저장';});
+  },100);
+}
+
+/* ════ 사진 카드 저장 ════ */
+function savePhotoCard(btn){
+  if(document.activeElement) document.activeElement.blur();
+  var wrap=btn.closest('.card-wrap'), unit=wrap.querySelector('.card-unit'), del=wrap.querySelector('.del-btn');
+  btn.disabled=true; btn.textContent='저장 중...';
+  if(del) del.classList.add('sv-hide');
+  var reps=replaceInputs(wrap);
+  setTimeout(function(){
+    html2canvas(unit,{scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#FFF'})
+    .then(function(c){
+      var ti=wrap.querySelector('.f-title');
+      var n=((ti&&ti.value.trim())||'photo').replace(/[^\uAC00-\uD7A3a-zA-Z0-9]/g,'_').slice(0,20);
+      var a=document.createElement('a'); a.download='kindboard_'+currentTeam+'_'+n+'.jpg';
+      a.href=c.toDataURL('image/jpeg',0.93); a.click();
+    }).catch(function(e){alert('저장 실패: '+e.message);})
+    .finally(function(){
+      restoreInputs(reps);
+      if(del) del.classList.remove('sv-hide');
+      btn.disabled=false; btn.textContent='💾 이 카드 저장';
+    });
+  },150);
+}
+
+/* ════ 전체 저장 ════ */
+function saveAll(fmt){
+  if(document.activeElement) document.activeElement.blur();
+  document.getElementById('controls').classList.add('sv-hide');
+  document.querySelectorAll('.card-save-btn,.del-btn').forEach(function(b){b.classList.add('sv-hide');});
+  document.getElementById('add-wrap').classList.add('sv-hide');
+  document.getElementById('save-status').classList.add('sv-hide');
+  var reps=replaceInputs(document.getElementById('full-canvas'));
+  var btn=document.getElementById('dl-all'); btn.disabled=true; btn.textContent='저장 중...';
+  setTimeout(function(){
+    html2canvas(document.getElementById('full-canvas'),{scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#E8E8E8'})
+    .then(function(c){
+      var type=fmt==='png'?'image/png':'image/jpeg';
+      var a=document.createElement('a');
+      a.download='kindboard_'+currentTeam+'_전체.'+(fmt==='png'?'png':'jpg');
+      a.href=c.toDataURL(type,fmt==='png'?1:0.93); a.click();
+    }).catch(function(e){alert('저장 실패: '+e.message);})
+    .finally(function(){
+      restoreInputs(reps);
+      document.getElementById('controls').classList.remove('sv-hide');
+      document.querySelectorAll('.card-save-btn,.del-btn').forEach(function(b){b.classList.remove('sv-hide');});
+      document.getElementById('add-wrap').classList.remove('sv-hide');
+      document.getElementById('save-status').classList.remove('sv-hide');
+      btn.disabled=false; btn.textContent='🖼️ 전체 한 장으로 저장 (JPG)';
+    });
+  },200);
+}
+
+/* ════ 관리자 ════ */
+var ACOLORS=['#FF6B9D','#5CE8C8','#FFD93D','#A29BFE','#6BCB77','#FF7043','#4FC3F7'];
+
+function showAdminLogin(){
+  var code=prompt('관리자 코드를 입력해 주세요');
+  if(code===ADMIN_CODE){showScreen('screen-admin'); loadAdminData();}
+  else if(code!==null){alert('코드가 올바르지 않아요.');}
+}
+
+async function loadAdminData(){
+  document.getElementById('team-list').innerHTML='<div class="admin-empty">불러오는 중...</div>';
+  try{
+    var res=await fetch(SB+'/rest/v1/cardnews_submissions?select=team_name,cards,updated_at&order=updated_at.desc',{headers:HDR});
+    var data=await res.json();
+    renderAdminList(Array.isArray(data)?data:[]);
+  }catch(e){
+    document.getElementById('team-list').innerHTML='<div class="admin-empty">데이터를 불러오지 못했어요.<br>GitHub Pages로 배포 후 사용해 주세요.</div>';
+  }
+}
+
+function renderAdminList(rows){
+  var totalCards=rows.reduce(function(s,t){return s+(t.cards?t.cards.length:0);},0);
+  var done=rows.filter(function(t){return t.cards&&t.cards.length>0;}).length;
+  document.getElementById('stat-total').textContent=rows.length;
+  document.getElementById('stat-done').textContent=done;
+  document.getElementById('stat-cards').textContent=totalCards;
+  if(!rows.length){document.getElementById('team-list').innerHTML='<div class="admin-empty">아직 제출한 팀이 없어요.</div>';return;}
+  var html='';
+  rows.forEach(function(t,i){
+    var color=ACOLORS[i%ACOLORS.length];
+    var cnt=t.cards?t.cards.length:0;
+    var upd=t.updated_at?relTime(t.updated_at):'—';
+    var enc=encodeURIComponent(JSON.stringify(t.cards||[]));
+    html+='<div class="team-row">'+
+      '<div class="team-avatar-sm" style="background:'+color+';">'+escH((t.team_name||'?').slice(0,1))+'</div>'+
+      '<div class="team-info">'+
+        '<div class="team-name-label">'+escH(t.team_name)+'팀</div>'+
+        '<div class="team-meta">카드 '+cnt+'장 &middot; '+upd+'</div>'+
+      '</div>'+
+      '<span class="team-status '+(cnt>0?'status-done':'status-none')+'">'+(cnt>0?'✓ 완료':'미작성')+'</span>'+
+      (cnt>0?'<button class="t-btn t-btn-dark" onclick="previewTeam(\''+escH(t.team_name)+'\',\''+enc+'\')">미리보기</button>':'<span style="width:72px;"></span>')+
+    '</div>';
+  });
+  document.getElementById('team-list').innerHTML=html;
+}
+
+function relTime(iso){
+  var d=Math.floor((Date.now()-new Date(iso))/1000);
+  if(d<60)return d+'초 전'; if(d<3600)return Math.floor(d/60)+'분 전';
+  if(d<86400)return Math.floor(d/3600)+'시간 전'; return Math.floor(d/86400)+'일 전';
+}
+
+function previewTeam(name,enc){
+  var cards=JSON.parse(decodeURIComponent(enc));
+  document.getElementById('modal-title').textContent=name+'팀 카드';
+  var html='';
+  cards.forEach(function(c){
+    html+='<div class="preview-card">'+
+      '<div class="preview-card-head">'+
+        '<span class="preview-badge" style="background:'+escH(c.color||'#5CE8C8')+';color:'+escH(c.textColor||'#1A1A2E')+';">'+escH(c.label||'CASE')+'</span>'+
+        '<div><div class="preview-card-title">'+escH(c.title||'(제목 없음)')+'</div>'+
+        '<div class="preview-card-team">'+escH(c.teamInfo||'')+'</div></div>'+
+      '</div>'+
+      (c.photo?'<img class="preview-img" src="'+c.photo+'">':'<div class="preview-no-photo">사진 없음</div>')+
+      (c.comment?'<div class="preview-comment">'+escH(c.comment)+'</div>':'')+
+    '</div>';
+  });
+  document.getElementById('preview-cards').innerHTML=html||'<div class="admin-empty">카드 내용이 없어요.</div>';
+  document.getElementById('modal-wrap').classList.add('show');
+}
+function closeModal(){document.getElementById('modal-wrap').classList.remove('show');}
 </script>
 </body>
 </html>
