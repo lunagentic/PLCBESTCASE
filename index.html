@@ -172,6 +172,65 @@ body{font-family:'Pretendard',sans-serif;background:#E8E8E8;min-height:100vh;}
 .preview-comment{padding:10px 18px 14px;font-size:12px;color:#555;line-height:1.6;}
 .preview-no-photo{height:90px;background:#F5F5F5;display:flex;align-items:center;justify-content:center;font-size:12px;color:#BBB;}
 
+
+/* ════ 반응형 ════ */
+@media (max-width: 1160px){
+  #full-canvas{ width:100%; padding:16px; gap:16px; }
+  #controls{ width:100%; padding:16px 16px 0; }
+}
+@media (max-width: 700px){
+  /* 헤더 */
+  .team-header{ padding:0 16px; height:52px; gap:10px; }
+  .header-sep{ display:none; }
+  .header-team-label{ font-size:13px; }
+  .save-status{ font-size:10px; padding:3px 8px; }
+  .header-logout{ font-size:11px; padding:4px 10px; }
+
+  /* 안내 배너 */
+  #save-notice{ padding:10px 16px; font-size:12px; }
+
+  /* 그리드: 1열 */
+  #full-canvas{
+    grid-template-columns:1fr;
+    padding:12px;
+    gap:16px;
+  }
+  #controls{ width:100%; padding:12px 12px 0; flex-direction:column; }
+  .btn-all, .btn-all-sub{ width:100%; text-align:center; padding:13px; }
+
+  /* 로그인 화면 */
+  .login-box{ padding:28px 20px; }
+  .login-title{ font-size:18px; }
+  .team-grid{ grid-template-columns:repeat(2,1fr); gap:10px; }
+  .team-btn{ padding:16px 8px; }
+  .team-btn-name{ font-size:13px; }
+
+  /* 카드 버튼 행 */
+  .card-wrap > div[style*="display:flex"]{flex-wrap:wrap;}
+
+  /* 꿀팁 말풍선: 우측 공간 없으니 카드 하단으로 */
+  .tip-preview{
+    left:0 !important; right:0 !important;
+    top:auto !important; bottom:12px !important;
+    width:auto !important;
+  }
+  .tip-preview::after{
+    top:auto !important; bottom:100% !important;
+    right:auto !important; left:20px !important;
+    border-top-color:transparent !important;
+    border-bottom-color:#FFD93D !important;
+    border-right-color:transparent !important;
+  }
+
+  /* 관리자 */
+  .admin-summary{ grid-template-columns:repeat(3,1fr); gap:8px; }
+  .admin-stat-num{ font-size:22px; }
+  .team-row{ flex-wrap:wrap; gap:10px; }
+}
+@media (max-width: 400px){
+  .team-grid{ grid-template-columns:repeat(2,1fr); }
+  .admin-summary{ grid-template-columns:1fr 1fr; }
+}
 .sv-hide{display:none!important;}
 /* ── 꿀팁 ── */
 
