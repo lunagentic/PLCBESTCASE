@@ -415,6 +415,14 @@ function renderTeamButtons(){
 }
 renderTeamButtons();
 
+/* ════ 페이지 닫힐 때 강제 저장 ════ */
+window.addEventListener('beforeunload', function(){
+  if(currentTeam){
+    syncFromDOM();
+    saveLocal(currentTeam, teamCards);
+  }
+});
+
 /* ════ 팀 입장 ════ */
 function enterTeam(name){
   currentTeam = name;
@@ -508,6 +516,9 @@ async function saveToDB(){
   if(!currentTeam) return;
   setSaveStatus('saving');
 
+  /* 항상 DOM에서 최신 텍스트 읽어오기 */
+  syncFromDOM();
+
   /* localStorage 항상 먼저 저장 (즉각 반영) */
   saveLocal(currentTeam, teamCards);
 
@@ -530,11 +541,13 @@ async function saveToDB(){
 
 function queueSave(){
   setSaveStatus('saving');
+  /* 타이핑 중에도 즉시 DOM 동기화 후 로컬 저장 */
+  syncFromDOM();
+  saveLocal(currentTeam, teamCards);
   if(saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(function(){
-    syncFromDOM();
     saveToDB();
-  }, 1800);
+  }, 1500);
 }
 
 /* ════ DOM → teamCards ════ */
@@ -596,17 +609,22 @@ function buildCardEl(card){
   bInp.value=card.label||'CASE'; bInp.placeholder='CASE';
   bInp.style.color=card.textColor;
   bInp.addEventListener('input', queueSave);
+  bInp.addEventListener('blur', function(){ syncFromDOM(); saveLocal(currentTeam, teamCards); });
   bWrap.appendChild(bInp); head.appendChild(bWrap);
 
   var fields = document.createElement('div'); fields.className='pc-fields';
   var tInp = document.createElement('input');
   tInp.type='text'; tInp.className='f-title';
   tInp.value=card.title||''; tInp.placeholder='제목을 입력하세요';
-  tInp.addEventListener('input', queueSave); fields.appendChild(tInp);
+  tInp.addEventListener('input', queueSave);
+  tInp.addEventListener('blur', function(){ syncFromDOM(); saveLocal(currentTeam, teamCards); });
+  fields.appendChild(tInp);
   var mInp = document.createElement('input');
   mInp.type='text'; mInp.className='f-team';
   mInp.value=card.teamInfo||''; mInp.placeholder='팀 이름을 입력하세요 (예: 햇살반)';
-  mInp.addEventListener('input', queueSave); fields.appendChild(mInp);
+  mInp.addEventListener('input', queueSave);
+  mInp.addEventListener('blur', function(){ syncFromDOM(); saveLocal(currentTeam, teamCards); });
+  fields.appendChild(mInp);
   head.appendChild(fields); inner.appendChild(head);
 
   /* 슬롯 */
@@ -646,6 +664,7 @@ function buildCardEl(card){
   ta.placeholder='수업 소감이나 아이들 반응을 자유롭게 입력하세요 :)';
   ta.value=card.comment||'';
   ta.addEventListener('input', function(){ autoResize(this); queueSave(); });
+  ta.addEventListener('blur', function(){ syncFromDOM(); saveLocal(currentTeam, teamCards); });
   cw.appendChild(ta); inner.appendChild(cw);
 
   unit.appendChild(inner); wrap.appendChild(unit);
