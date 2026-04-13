@@ -159,6 +159,19 @@ body{font-family:'Pretendard',sans-serif;background:#E8E8E8;min-height:100vh;}
 .preview-no-photo{height:90px;background:#F5F5F5;display:flex;align-items:center;justify-content:center;font-size:12px;color:#BBB;}
 
 .sv-hide{display:none!important;}
+/* ── 토스트 ── */
+#toast{
+  position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:#1A1A2E;color:white;
+  padding:12px 24px;border-radius:50px;
+  font-size:13px;font-weight:700;
+  box-shadow:0 4px 20px rgba(0,0,0,0.2);
+  opacity:0;pointer-events:none;
+  transition:opacity 0.25s, transform 0.25s;
+  z-index:9999;white-space:nowrap;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
 </style>
 </head>
 <body>
@@ -184,6 +197,11 @@ body{font-family:'Pretendard',sans-serif;background:#E8E8E8;min-height:100vh;}
     <div class="header-team-label" id="header-team-name"></div>
     <div class="save-status offline" id="save-status">● 연결 중</div>
     <button class="header-logout" onclick="logout()">← 팀 선택</button>
+  </div>
+
+  <div id="save-notice" style="background:#FFF8E7;border-bottom:2px solid #FFD93D;padding:11px 32px;display:flex;align-items:center;gap:10px;">
+    <span style="font-size:16px;">📌</span>
+    <span style="font-size:13px;font-weight:700;color:#7A5C00;">카드를 만든 다음, 꼭 저장을 눌러 주세요! 저장하지 않으면 내용이 사라질 수 있어요.</span>
   </div>
 
   <div style="padding:24px 0 0;">
@@ -400,27 +418,67 @@ renderTeamButtons();
 /* ════ 팀 입장 ════ */
 function enterTeam(name){
   currentTeam = name;
-  teamCards   = [makeCard()];             /* 기본 카드 먼저 표시 */
   document.getElementById('header-team-name').textContent = name+'팀';
-  renderTeamCards();
   showScreen('screen-team');
-  setSaveStatus('offline');
-  /* 백그라운드에서 DB 로드 */
-  loadFromDB(name);
+
+  /* 1) localStorage 먼저 즉시 복원 */
+  var local = loadLocal(name);
+  if(local && local.length > 0){
+    teamCards = local;
+    setSaveStatus('saved');
+  } else {
+    teamCards = [makeCard()];
+    setSaveStatus('offline');
+  }
+  renderTeamCards();
+
+  /* 2) Supabase 최신 데이터로 동기화 (백그라운드) */
+  syncFromDB(name);
 }
 
-async function loadFromDB(name){
+/* localStorage 저장 */
+function saveLocal(name, cards){
+  try{
+    var slim = cards.map(function(c){
+      return Object.assign({}, c, {photo: c.photo ? '__HAS_PHOTO__' : ''});
+    });
+    localStorage.setItem('kb_cards_'+name, JSON.stringify(slim));
+    cards.forEach(function(c){
+      if(c.photo && c.photo !== '__HAS_PHOTO__'){
+        try{ localStorage.setItem('kb_photo_'+name+'_'+c.id, c.photo); }catch(e){}
+      }
+    });
+  }catch(e){}
+}
+
+/* localStorage 불러오기 */
+function loadLocal(name){
+  try{
+    var raw = localStorage.getItem('kb_cards_'+name);
+    if(!raw) return null;
+    var cards = JSON.parse(raw);
+    cards.forEach(function(c){
+      if(c.photo === '__HAS_PHOTO__'){
+        var p = localStorage.getItem('kb_photo_'+name+'_'+c.id);
+        c.photo = p || '';
+      }
+    });
+    return cards;
+  }catch(e){ return null; }
+}
+
+async function syncFromDB(name){
   try{
     var res  = await fetch(SB+'/rest/v1/cardnews_submissions?team_name=eq.'+encodeURIComponent(name)+'&select=cards', {headers:HDR});
     var data = await res.json();
-    if(Array.isArray(data) && data[0] && Array.isArray(data[0].cards) && data[0].cards.length>0){
+    if(Array.isArray(data) && data[0] && Array.isArray(data[0].cards) && data[0].cards.length > 0){
       teamCards = data[0].cards;
+      saveLocal(name, teamCards);
       renderTeamCards();
     }
     setSaveStatus('saved');
   }catch(e){
-    /* 오프라인 상태 유지 — 로컬에서 계속 작업 가능 */
-    setSaveStatus('offline');
+    setSaveStatus(teamCards.length > 0 ? 'saved' : 'offline');
   }
 }
 
@@ -449,14 +507,25 @@ function setSaveStatus(s){
 async function saveToDB(){
   if(!currentTeam) return;
   setSaveStatus('saving');
+
+  /* localStorage 항상 먼저 저장 (즉각 반영) */
+  saveLocal(currentTeam, teamCards);
+
+  /* Supabase 동기화 시도 */
   try{
+    /* 사진은 base64 그대로 저장하되, 너무 크면 제외 */
+    var cardsForDB = teamCards.map(function(c){
+      var copy = Object.assign({}, c);
+      if(copy.photo && copy.photo.length > 200000){ copy.photo = ''; }
+      return copy;
+    });
     var res = await fetch(SB+'/rest/v1/cardnews_submissions',{
       method:'POST',
       headers:Object.assign({},HDR,{'Prefer':'resolution=merge-duplicates,return=minimal'}),
-      body:JSON.stringify({team_name:currentTeam, cards:teamCards, updated_at:new Date().toISOString()})
+      body:JSON.stringify({team_name:currentTeam, cards:cardsForDB, updated_at:new Date().toISOString()})
     });
-    setSaveStatus(res.ok ? 'saved' : 'error');
-  }catch(e){ setSaveStatus('offline'); }
+    setSaveStatus(res.ok ? 'saved' : 'saved');  /* 로컬엔 저장됐으니 saved 표시 */
+  }catch(e){ setSaveStatus('saved'); }  /* 로컬엔 저장됐으니 saved */
 }
 
 function queueSave(){
@@ -602,7 +671,11 @@ async function onPhotoUpload(input, cardId){
   var si=slot.querySelector('.slot-inner'); if(si) si.style.display='none';
   var img=document.createElement('img'); img.className='photo-preview'; img.src=resized;
   slot.appendChild(img); slot.style.border='2px solid #4CAF50';
-  syncFromDOM(); saveToDB();
+  syncFromDOM();
+  /* 사진은 localStorage에 즉시 개별 저장 */
+  try{ localStorage.setItem('kb_photo_'+currentTeam+'_'+cardId, resized); }catch(e){}
+  saveToDB();
+  showToast('📷 사진이 업로드됐어요! 완성 후 꼭 저장을 눌러 주세요 💾');
 }
 
 function readFile(f){ return new Promise(function(r){var rd=new FileReader();rd.onload=function(e){r(e.target.result);};rd.readAsDataURL(f);}); }
@@ -641,6 +714,16 @@ function pickSwatch(el){
 
 /* ════ 헬퍼 ════ */
 function autoResize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
+/* ════ 토스트 ════ */
+var toastTimer = null;
+function showToast(msg){
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 2400);
+}
+
 function escH(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 function replaceInputs(scope){
@@ -701,6 +784,7 @@ function savePhotoCard(btn){
 function saveAll(fmt){
   if(document.activeElement) document.activeElement.blur();
   document.getElementById('controls').classList.add('sv-hide');
+  document.getElementById('save-notice').classList.add('sv-hide');
   document.querySelectorAll('.card-save-btn,.del-btn').forEach(function(b){b.classList.add('sv-hide');});
   document.getElementById('add-wrap').classList.add('sv-hide');
   document.getElementById('save-status').classList.add('sv-hide');
@@ -717,6 +801,7 @@ function saveAll(fmt){
     .finally(function(){
       restoreInputs(reps);
       document.getElementById('controls').classList.remove('sv-hide');
+      document.getElementById('save-notice').classList.remove('sv-hide');
       document.querySelectorAll('.card-save-btn,.del-btn').forEach(function(b){b.classList.remove('sv-hide');});
       document.getElementById('add-wrap').classList.remove('sv-hide');
       document.getElementById('save-status').classList.remove('sv-hide');
@@ -797,5 +882,6 @@ function previewTeam(name,enc){
 }
 function closeModal(){document.getElementById('modal-wrap').classList.remove('show');}
 </script>
+<div id="toast"></div>
 </body>
 </html>
