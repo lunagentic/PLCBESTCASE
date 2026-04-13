@@ -477,12 +477,82 @@ function loadLocal(name){
 
 async function syncFromDB(name){
   try{
-    var res  = await fetch(SB+'/rest/v1/cardnews_submissions?team_name=eq.'+encodeURIComponent(name)+'&select=cards', {headers:HDR});
+    var res = await fetch(
+      SB+'/rest/v1/cardnews_submissions?team_name=eq.'+encodeURIComponent(name)+'&select=cards',
+      {headers:HDR}
+    );
+    if(!res.ok) throw new Error('fetch failed: '+res.status);
     var data = await res.json();
+
     if(Array.isArray(data) && data[0] && Array.isArray(data[0].cards) && data[0].cards.length > 0){
-      teamCards = data[0].cards;
+      var dbCards = data[0].cards;
+
+      /* ── 현재 DOM에서 텍스트 먼저 수집 (사용자가 입력 중일 수 있음) ── */
+      var domText = {};
+      document.querySelectorAll('.team-card-wrap').forEach(function(wrap){
+        var cid = wrap.dataset.cardId;
+        domText[cid] = {
+          label:   (wrap.querySelector('.pc-badge-input')||{}).value || '',
+          title:   (wrap.querySelector('.f-title')||{}).value        || '',
+          teamInfo:(wrap.querySelector('.f-team')||{}).value         || '',
+          comment: (wrap.querySelector('.f-comment')||{}).value      || ''
+        };
+      });
+
+      /* ── DB 카드를 기반으로, 텍스트는 DOM 값 우선 적용 ── */
+      dbCards = dbCards.map(function(dbCard){
+        var dom = domText[dbCard.id];
+        if(dom){
+          /* DOM에 값이 있으면 DOM 텍스트를 우선 */
+          return Object.assign({}, dbCard, {
+            label:    dom.label    || dbCard.label    || 'CASE',
+            title:    dom.title    || dbCard.title    || '',
+            teamInfo: dom.teamInfo || dbCard.teamInfo || '',
+            comment:  dom.comment  || dbCard.comment  || ''
+          });
+        }
+        return dbCard;
+      });
+
+      teamCards = dbCards;
       saveLocal(name, teamCards);
-      renderTeamCards();
+
+      /* ── 사진만 DOM에 반영 (텍스트 input은 건드리지 않음) ── */
+      teamCards.forEach(function(card){
+        var wrap = document.querySelector('[data-card-id="'+card.id+'"]');
+        if(!wrap) return;
+        /* 사진이 있는데 DOM에 없으면 주입 */
+        if(card.photo){
+          var slot = wrap.querySelector('.slot');
+          var existing = slot && slot.querySelector('.photo-preview');
+          if(!existing && slot){
+            var si = slot.querySelector('.slot-inner');
+            if(si) si.style.display='none';
+            var img = document.createElement('img');
+            img.className='photo-preview'; img.src=card.photo;
+            slot.appendChild(img);
+            slot.style.border='2px solid #4CAF50';
+          }
+        }
+        /* 텍스트 필드: 비어 있는 경우에만 DB 값 채우기 (입력 중인 값 방해 안 함) */
+        var lbl = wrap.querySelector('.pc-badge-input');
+        var ttl = wrap.querySelector('.f-title');
+        var tm  = wrap.querySelector('.f-team');
+        var cmt = wrap.querySelector('.f-comment');
+        if(lbl && !lbl.value && card.label)   lbl.value = card.label;
+        if(ttl && !ttl.value && card.title)   ttl.value = card.title;
+        if(tm  && !tm.value  && card.teamInfo) tm.value = card.teamInfo;
+        if(cmt && !cmt.value && card.comment){ cmt.value = card.comment; autoResize(cmt); }
+      });
+
+      /* DB에는 없는 새 카드가 teamCards에 있으면 추가 렌더 */
+      var rendered = Array.from(document.querySelectorAll('.team-card-wrap')).map(function(w){return w.dataset.cardId;});
+      teamCards.forEach(function(card){
+        if(rendered.indexOf(card.id)===-1){
+          var aw = document.getElementById('add-wrap');
+          aw.parentNode.insertBefore(buildCardEl(card), aw);
+        }
+      });
     }
     setSaveStatus('saved');
   }catch(e){
@@ -530,13 +600,54 @@ async function saveToDB(){
       if(copy.photo && copy.photo.length > 200000){ copy.photo = ''; }
       return copy;
     });
-    var res = await fetch(SB+'/rest/v1/cardnews_submissions',{
-      method:'POST',
-      headers:Object.assign({},HDR,{'Prefer':'resolution=merge-duplicates,return=minimal'}),
-      body:JSON.stringify({team_name:currentTeam, cards:cardsForDB, updated_at:new Date().toISOString()})
-    });
-    setSaveStatus(res.ok ? 'saved' : 'saved');  /* 로컬엔 저장됐으니 saved 표시 */
-  }catch(e){ setSaveStatus('saved'); }  /* 로컬엔 저장됐으니 saved */
+
+    /* 1차: UPSERT (on_conflict=team_name 필수) */
+    var res = await fetch(
+      SB+'/rest/v1/cardnews_submissions?on_conflict=team_name',
+      {
+        method:'POST',
+        headers:Object.assign({},HDR,{
+          'Prefer':'resolution=merge-duplicates,return=minimal'
+        }),
+        body:JSON.stringify({
+          team_name:currentTeam,
+          cards:cardsForDB,
+          updated_at:new Date().toISOString()
+        })
+      }
+    );
+
+    if(!res.ok){
+      /* 2차: PATCH로 업데이트 시도 */
+      var res2 = await fetch(
+        SB+'/rest/v1/cardnews_submissions?team_name=eq.'+encodeURIComponent(currentTeam),
+        {
+          method:'PATCH',
+          headers:Object.assign({},HDR,{'Prefer':'return=minimal'}),
+          body:JSON.stringify({
+            cards:cardsForDB,
+            updated_at:new Date().toISOString()
+          })
+        }
+      );
+      /* PATCH도 안 되면 INSERT */
+      if(!res2.ok){
+        await fetch(SB+'/rest/v1/cardnews_submissions',{
+          method:'POST',
+          headers:Object.assign({},HDR,{'Prefer':'return=minimal'}),
+          body:JSON.stringify({
+            team_name:currentTeam,
+            cards:cardsForDB,
+            updated_at:new Date().toISOString()
+          })
+        });
+      }
+    }
+    setSaveStatus('saved');
+  }catch(e){
+    /* Supabase 실패해도 localStorage는 저장됨 */
+    setSaveStatus('saved');
+  }
 }
 
 function queueSave(){
