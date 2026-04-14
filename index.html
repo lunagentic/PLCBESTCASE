@@ -231,6 +231,21 @@ body{font-family:'Pretendard',sans-serif;background:#E8E8E8;min-height:100vh;}
   .team-grid{ grid-template-columns:repeat(2,1fr); }
   .admin-summary{ grid-template-columns:1fr 1fr; }
 }
+/* ── 좋아요 버튼 ── */
+.like-btn{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:9px 0;background:white;
+  border:1.5px solid #E0E0E0;border-radius:50px;
+  font-size:12px;font-weight:700;color:#888;
+  cursor:pointer;font-family:'Pretendard',sans-serif;
+  transition:all 0.18s;flex-shrink:0;width:100%;
+}
+.like-btn:hover{border-color:#FF6B9D;color:#FF6B9D;background:#FFF5F8;}
+.like-btn.liked{border-color:#FF6B9D;color:#FF6B9D;background:#FFF5F8;}
+.like-btn .like-count{
+  font-size:13px;font-weight:800;
+}
+.like-heart{font-size:15px;line-height:1;}
 .sv-hide{display:none!important;}
 /* ── 꿀팁 ── */
 
@@ -714,6 +729,8 @@ async function syncFromDB(name){
           label:    dom.label    || dbCard.label    || 'CASE',
           title:    dom.title    || dbCard.title    || '',
           teamInfo: dom.teamInfo || dbCard.teamInfo || (currentTeam ? 'PLC 1차 ' + currentTeam : ''),
+          /* likes는 DB값과 로컬값 중 큰 값 사용 (중복 좋아요 보존) */
+          likes: Math.max(dbCard.likes||0, (teamCards.find(function(c){return c.id===dbCard.id;})||{}).likes||0),
           comment:  dom.comment  || dbCard.comment  || '',
           tip:      dom.tip      || dbCard.tip      || '',
           /* 사진: 로컬에 있으면 우선, 없으면 DB 것 사용 */
@@ -862,7 +879,7 @@ function syncFromDOM(){
 function makeCard(color, textColor){
   return {
     id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
-    label:'CASE', title:'', teamInfo: currentTeam ? 'PLC 1차 ' + currentTeam : '', comment:'', photo:'', tip:'',
+    label:'CASE', title:'', teamInfo: currentTeam ? 'PLC 1차 ' + currentTeam : '', comment:'', photo:'', tip:'', likes:0,
     color:color||'#5CE8C8', textColor:textColor||'#1A1A2E'
   };
 }
@@ -1188,6 +1205,31 @@ function buildCardEl(card){
   btnRow.appendChild(dlBtn);
 
   wrap.appendChild(btnRow);
+
+  /* ── 좋아요 버튼 ── */
+  var likeBtn = document.createElement('button'); likeBtn.className='like-btn';
+  var likesCount = card.likes || 0;
+  function renderLikeBtn(){
+    likeBtn.innerHTML =
+      '<span class="like-heart">🩷</span>'+
+      '<span>좋아요</span>'+
+      (likesCount > 0 ? '<span class="like-count">'+likesCount+'</span>' : '');
+    likeBtn.classList.toggle('liked', likesCount > 0);
+  }
+  renderLikeBtn();
+  likeBtn.addEventListener('click', function(){
+    likesCount++;
+    /* teamCards에서 해당 카드 likes 업데이트 */
+    var c = teamCards.find(function(c){return c.id===card.id;});
+    if(c) c.likes = likesCount;
+    renderLikeBtn();
+    /* 짧은 애니메이션 */
+    likeBtn.style.transform='scale(1.12)';
+    setTimeout(function(){ likeBtn.style.transform=''; }, 150);
+    /* DB 저장 */
+    syncFromDOM(); saveToDB();
+  });
+  wrap.appendChild(likeBtn);
 
   setTimeout(function(){ autoResize(ta); if(tipTa.value) autoResize(tipTa); }, 0);
   return wrap;
