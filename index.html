@@ -731,6 +731,7 @@ async function syncFromDB(name){
     }
     setSaveStatus('saved');
   }catch(e){
+    console.error('syncFromDB error:', e);
     setSaveStatus(teamCards.length > 0 ? 'saved' : 'offline');
   }
 }
@@ -872,12 +873,22 @@ function renderTeamCards(){
   document.querySelectorAll('.team-card-wrap').forEach(function(el){el.remove();});
   var addWrap = document.getElementById('add-wrap');
   teamCards.forEach(function(card){
-    addWrap.parentNode.insertBefore(buildCardEl(card), addWrap);
+    try{
+      addWrap.parentNode.insertBefore(buildCardEl(card), addWrap);
+    }catch(e){
+      console.error('buildCardEl error:', e, card);
+    }
   });
 }
 
 /* ════ 카드 DOM 생성 ════ */
 function buildCardEl(card){
+  /* DB 카드에 없는 필드 안전 기본값 */
+  card = Object.assign({
+    id:'c'+Date.now(), label:'AI 비서', title:'', teamInfo:'',
+    comment:'', photo:'', tip:'', likes:0,
+    color:'#5CE8C8', textColor:'#1A1A2E'
+  }, card);
   var wrap = document.createElement('div');
   wrap.className = 'card-wrap team-card-wrap';
   wrap.dataset.cardId = card.id;
