@@ -231,21 +231,81 @@ body{font-family:'Pretendard',sans-serif;background:#E8E8E8;min-height:100vh;}
   .team-grid{ grid-template-columns:repeat(2,1fr); }
   .admin-summary{ grid-template-columns:1fr 1fr; }
 }
-/* ── 좋아요 버튼 ── */
-.like-btn{
-  display:flex;align-items:center;justify-content:center;gap:6px;
-  padding:9px 0;background:white;
-  border:1.5px solid #E0E0E0;border-radius:50px;
-  font-size:12px;font-weight:700;color:#888;
+/* ── 좋아요 (카드 안 우하단 오버레이) ── */
+.like-btn-head{
+  flex-shrink:0;display:flex;align-items:center;gap:3px;
+  background:none;border:none;cursor:pointer;
+  padding:4px 6px;border-radius:50px;
+  transition:background 0.15s,transform 0.12s;
+  margin-top:1px;
+}
+.like-btn-head:hover{background:rgba(0,0,0,0.05);transform:scale(1.1);}
+.like-btn-head .lcount{
+  font-size:10px;font-weight:800;line-height:1;
+}
+
+/* ── 댓글 (접이식, Tailwind-style) ── */
+.cmts-wrap{border-radius:16px;overflow:hidden;border:1.5px solid #F0F0F0;background:white;}
+.cmts-toggle{
+  width:100%;display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;background:white;border:none;cursor:pointer;
+  font-family:'Pretendard',sans-serif;font-size:12px;font-weight:700;color:#555;
+  transition:background 0.15s;
+}
+.cmts-toggle:hover{background:#FAFAFA;}
+.cmts-toggle svg{transition:transform 0.2s;flex-shrink:0;}
+.cmts-toggle.open svg{transform:rotate(180deg);}
+.cmts-body{display:none;border-top:1px solid #F0F0F0;}
+.cmts-body.open{display:block;}
+.cmts-list{max-height:200px;overflow-y:auto;}
+.cmt-item{padding:10px 16px;border-bottom:1px solid #F8F8F8;display:flex;flex-direction:column;gap:3px;}
+.cmt-item:last-child{border-bottom:none;}
+.cmt-meta{display:flex;align-items:center;gap:7px;}
+.cmt-anon{font-size:11px;font-weight:800;color:#888;}
+.cmt-time{font-size:10px;color:#CCC;}
+.cmt-text{font-size:13px;color:#222;font-weight:500;line-height:1.55;}
+.cmt-empty{padding:18px;text-align:center;font-size:12px;color:#CCC;}
+.cmt-input-row{
+  display:flex;gap:8px;align-items:flex-end;
+  padding:10px 12px;border-top:1px solid #F0F0F0;
+}
+.cmt-input{
+  flex:1;border:1.5px solid #EEE;border-radius:12px;
+  padding:8px 12px;font-size:13px;font-family:'Pretendard',sans-serif;
+  font-weight:500;color:#222;outline:none;resize:none;
+  line-height:1.5;min-height:38px;max-height:80px;overflow-y:auto;
+  transition:border-color 0.15s;background:#FAFAFA;
+}
+.cmt-input:focus{border-color:#A29BFE;background:white;}
+.cmt-input::placeholder{color:#CCC;}
+.cmt-submit{
+  flex-shrink:0;padding:8px 14px;
+  background:#1A1A2E;color:white;border:none;
+  border-radius:50px;font-size:12px;font-weight:700;
   cursor:pointer;font-family:'Pretendard',sans-serif;
-  transition:all 0.18s;flex-shrink:0;width:100%;
+  transition:background 0.15s;white-space:nowrap;
 }
-.like-btn:hover{border-color:#FF6B9D;color:#FF6B9D;background:#FFF5F8;}
-.like-btn.liked{border-color:#FF6B9D;color:#FF6B9D;background:#FFF5F8;}
-.like-btn .like-count{
-  font-size:13px;font-weight:800;
+.cmt-submit:hover{background:#333;}
+
+.card-comments{
+  background:white;border-radius:16px;overflow:hidden;
+  border:1.5px solid #F0F0F0;
 }
-.like-heart{font-size:15px;line-height:1;}
+
+
+
+.comment-item:last-child{border-bottom:none;}
+
+
+
+
+
+
+.comment-input:focus{border-color:#A29BFE;background:white;}
+.comment-input::placeholder{color:#CCC;}
+
+.comment-submit:hover{background:#333;}
+
 .sv-hide{display:none!important;}
 /* ── 꿀팁 ── */
 
@@ -341,7 +401,8 @@ body{font-family:'Pretendard',sans-serif;background:#E8E8E8;min-height:100vh;}
 
 /* 저장(다운로드) 시 꿀팁 요소 숨김 */
 .saving .tip-section-outer,
-.card-frame.saving .tip-preview{ display:none !important; }
+.card-frame.saving .tip-preview,
+.card-unit.saving .like-btn-head{ display:none !important; }
 
 /* ── 복사 아이콘 ── */
 .icon-copy{
@@ -638,7 +699,7 @@ window.addEventListener('beforeunload', function(){
 /* ════ 팀 입장 ════ */
 function enterTeam(name){
   currentTeam = name;
-  document.getElementById('header-team-name').textContent = name+'팀';
+  document.getElementById('header-team-name').textContent = name.endsWith('팀') ? name : name+'팀';
   showScreen('screen-team');
 
   /* 1) localStorage 먼저 즉시 복원 */
@@ -731,6 +792,8 @@ async function syncFromDB(name){
           teamInfo: dom.teamInfo || dbCard.teamInfo || (currentTeam ? 'PLC 1차 ' + currentTeam : ''),
           /* likes는 DB값과 로컬값 중 큰 값 사용 (중복 좋아요 보존) */
           likes: Math.max(dbCard.likes||0, (teamCards.find(function(c){return c.id===dbCard.id;})||{}).likes||0),
+          /* comments는 DB값 우선 (최신 댓글 보존) */
+          comments: (dbCard.comments && dbCard.comments.length > 0) ? dbCard.comments : ((teamCards.find(function(c){return c.id===dbCard.id;})||{}).comments||[]),
           comment:  dom.comment  || dbCard.comment  || '',
           tip:      dom.tip      || dbCard.tip      || '',
           /* 사진: 로컬에 있으면 우선, 없으면 DB 것 사용 */
@@ -879,7 +942,7 @@ function syncFromDOM(){
 function makeCard(color, textColor){
   return {
     id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
-    label:'CASE', title:'', teamInfo: currentTeam ? 'PLC 1차 ' + currentTeam : '', comment:'', photo:'', tip:'', likes:0,
+    label:'CASE', title:'', teamInfo: currentTeam ? 'PLC 1차 ' + currentTeam : '', comment:'', photo:'', tip:'', likes:0, comments:[],
     color:color||'#5CE8C8', textColor:textColor||'#1A1A2E'
   };
 }
@@ -1035,7 +1098,9 @@ function buildCardEl(card){
   mInp.addEventListener('input', queueSave);
   mInp.addEventListener('blur', function(){ syncFromDOM(); saveLocal(currentTeam, teamCards); });
   fields.appendChild(mInp);
-  head.appendChild(fields); inner.appendChild(head);
+  head.appendChild(fields);
+  head.appendChild(lBtn);   /* 하트 버튼: head 우측 */
+  inner.appendChild(head);
 
   /* 슬롯 */
   var pb = document.createElement('div'); pb.className='photo-body';
@@ -1206,30 +1271,106 @@ function buildCardEl(card){
 
   wrap.appendChild(btnRow);
 
-  /* ── 좋아요 버튼 ── */
-  var likeBtn = document.createElement('button'); likeBtn.className='like-btn';
-  var likesCount = card.likes || 0;
-  function renderLikeBtn(){
-    likeBtn.innerHTML =
-      '<span class="like-heart">🩷</span>'+
-      '<span>좋아요</span>'+
-      (likesCount > 0 ? '<span class="like-count">'+likesCount+'</span>' : '');
-    likeBtn.classList.toggle('liked', likesCount > 0);
+  /* ── 좋아요: pc-head 우측 작은 하트 ── */
+  /* likesCount는 teamCards에서 항상 최신값 읽기 (재진입 시 유지) */
+  function getLikes(){ var c=teamCards.find(function(x){return x.id===card.id;}); return c?(c.likes||0):0; }
+  var lBtn = document.createElement('button'); lBtn.className='like-btn-head'; lBtn.title='좋아요';
+  function getBadgeColor(){ var c=teamCards.find(function(x){return x.id===card.id;}); var lbl=c?c.label:''; var m={'AI 비서':'#5CE8C8','스토리북':'#A29BFE','놀이기록':'#FFD93D','컬러링':'#FF6B9D'}; return m[lbl]||'#A29BFE'; }
+  function heartSVG(filled,color){
+    var fill=filled?color:'none';
+    var stroke=filled?color:(color||'#AAA');
+    return '<svg width="18" height="18" viewBox="0 0 24 24" fill="'+fill+'" stroke="'+stroke+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
   }
-  renderLikeBtn();
-  likeBtn.addEventListener('click', function(){
-    likesCount++;
-    /* teamCards에서 해당 카드 likes 업데이트 */
-    var c = teamCards.find(function(c){return c.id===card.id;});
-    if(c) c.likes = likesCount;
-    renderLikeBtn();
-    /* 짧은 애니메이션 */
-    likeBtn.style.transform='scale(1.12)';
-    setTimeout(function(){ likeBtn.style.transform=''; }, 150);
-    /* DB 저장 */
-    syncFromDOM(); saveToDB();
+  function renderLike(){
+    var n=getLikes(); var color=getBadgeColor();
+    lBtn.innerHTML=heartSVG(n>0,color)+(n>0?'<span class="lcount" style="color:'+color+'">'+n+'</span>':'');
+  }
+  renderLike();
+  lBtn.addEventListener('click',function(e){
+    e.stopPropagation();
+    var c=teamCards.find(function(x){return x.id===card.id;});
+    if(c){ c.likes=(c.likes||0)+1; }
+    renderLike();
+    lBtn.style.transform='scale(1.25)';
+    setTimeout(function(){lBtn.style.transform='';},150);
+    syncFromDOM(); saveLocal(currentTeam,teamCards); saveToDB();
   });
-  wrap.appendChild(likeBtn);
+
+  /* ── 댓글 (접이식) ── */
+  var cmtsWrap = document.createElement('div'); cmtsWrap.className='cmts-wrap';
+
+  /* 토글 버튼 */
+  var cmtsToggle = document.createElement('button'); cmtsToggle.className='cmts-toggle';
+  var cmtsCountEl = document.createElement('span');
+  function updateCmtCount(){
+    var cnt=(card.comments||[]).length;
+    cmtsCountEl.textContent='💬 댓글'+(cnt>0?' '+cnt:'');
+  }
+  updateCmtCount();
+  cmtsToggle.appendChild(cmtsCountEl);
+  var chevronSpan=document.createElement('span'); chevronSpan.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+  cmtsToggle.appendChild(chevronSpan);
+  cmtsWrap.appendChild(cmtsToggle);
+
+  /* 접이식 바디 */
+  var cmtsBody = document.createElement('div'); cmtsBody.className='cmts-body';
+
+  /* 댓글 목록 */
+  var cList=document.createElement('div'); cList.className='cmts-list';
+  function renderComments(){
+    cList.innerHTML='';
+    var comments=card.comments||[];
+    if(!comments.length){
+      var emp=document.createElement('div'); emp.className='cmt-empty';
+      emp.textContent='첫 댓글을 남겨보세요 :)'; cList.appendChild(emp);
+    } else {
+      comments.forEach(function(cm){
+        var item=document.createElement('div'); item.className='cmt-item';
+        var meta=document.createElement('div'); meta.className='cmt-meta';
+        var anon=document.createElement('span'); anon.className='cmt-anon'; anon.textContent='익명';
+        var time=document.createElement('span'); time.className='cmt-time'; time.textContent=cm.at||'';
+        meta.appendChild(anon); meta.appendChild(time);
+        var txt=document.createElement('div'); txt.className='cmt-text'; txt.textContent=cm.text;
+        item.appendChild(meta); item.appendChild(txt); cList.appendChild(item);
+      });
+      setTimeout(function(){cList.scrollTop=cList.scrollHeight;},0);
+    }
+    updateCmtCount();
+  }
+  renderComments(); cmtsBody.appendChild(cList);
+
+  /* 입력창 */
+  var cInputRow=document.createElement('div'); cInputRow.className='cmt-input-row';
+  var cInput=document.createElement('textarea'); cInput.className='cmt-input';
+  cInput.placeholder='익명으로 댓글 남기기…'; cInput.rows=1;
+  cInput.addEventListener('input',function(){this.style.height='auto';this.style.height=this.scrollHeight+'px';});
+  var cSubmit=document.createElement('button'); cSubmit.className='cmt-submit'; cSubmit.textContent='등록';
+
+  function submitComment(){
+    var text=cInput.value.trim(); if(!text) return;
+    if(!card.comments) card.comments=[];
+    var now=new Date();
+    var ts=(now.getMonth()+1)+'/'+(now.getDate())+' '+(now.getHours()<10?'0':'')+now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes();
+    card.comments.push({text:text,at:ts,id:Date.now().toString(36)});
+    cInput.value=''; cInput.style.height='auto';
+    renderComments();
+    var c=teamCards.find(function(c){return c.id===card.id;}); if(c) c.comments=card.comments;
+    saveToDB();
+    showToast('💬 댓글이 등록됐어요!');
+  }
+  cSubmit.addEventListener('click',submitComment);
+  cInput.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();submitComment();}});
+  cInputRow.appendChild(cInput); cInputRow.appendChild(cSubmit);
+  cmtsBody.appendChild(cInputRow); cmtsWrap.appendChild(cmtsBody);
+
+  /* 토글 클릭 */
+  cmtsToggle.addEventListener('click',function(){
+    var open=cmtsBody.classList.toggle('open');
+    cmtsToggle.classList.toggle('open',open);
+    if(open) setTimeout(function(){cList.scrollTop=cList.scrollHeight;},50);
+  });
+
+  wrap.appendChild(cmtsWrap);
 
   setTimeout(function(){ autoResize(ta); if(tipTa.value) autoResize(tipTa); }, 0);
   return wrap;
@@ -1431,6 +1572,10 @@ function savePhotoCard(btn){
   var wrap=btn.closest('.card-wrap'), unit=wrap.querySelector('.card-unit'), del=wrap.querySelector('.del-btn');
   btn.disabled=true; btn.textContent='저장 중...';
   if(del) del.classList.add('sv-hide');
+  var likeH=wrap.querySelector('.like-btn-head'); if(likeH) likeH.classList.add('sv-hide');
+  var cmtsW=wrap.querySelector('.cmts-wrap'); if(cmtsW) cmtsW.classList.add('sv-hide');
+  var charCnt=wrap.querySelector('.char-count'); if(charCnt) charCnt.classList.add('sv-hide');
+  var tipSecO=wrap.querySelector('.tip-section-outer'); if(tipSecO) tipSecO.classList.add('sv-hide');
   wrap.querySelectorAll('.tip-section,.tip-preview').forEach(function(e){e.classList.add('sv-hide');});
   var reps=replaceInputs(wrap);
   var photoFixes=fixPhotos(wrap);   /* object-fit:contain 이미지 고정 */
@@ -1446,6 +1591,10 @@ function savePhotoCard(btn){
       restoreInputs(reps);
       restorePhotos(photoFixes);   /* 이미지 복원 */
       if(del) del.classList.remove('sv-hide');
+      if(likeH) likeH.classList.remove('sv-hide');
+      if(cmtsW) cmtsW.classList.remove('sv-hide');
+      if(charCnt) charCnt.classList.remove('sv-hide');
+      if(tipSecO) tipSecO.classList.remove('sv-hide');
       wrap.querySelectorAll('.tip-section,.tip-preview').forEach(function(e){e.classList.remove('sv-hide');});
       btn.disabled=false; btn.innerHTML=svgIcon('download')+' 카드 다운로드 (PNG)';
     });
@@ -1538,7 +1687,7 @@ function relTime(iso){
 
 function previewTeam(name,enc){
   var cards=JSON.parse(decodeURIComponent(enc));
-  document.getElementById('modal-title').textContent=name+'팀 카드';
+  document.getElementById('modal-title').textContent=(name.endsWith('팀')?name:name+'팀')+' 카드';
   var html='';
   cards.forEach(function(c){
     html+='<div class="preview-card">'+
