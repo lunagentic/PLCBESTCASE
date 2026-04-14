@@ -719,55 +719,32 @@ async function syncFromDB(name){
     if(Array.isArray(data) && data[0] && Array.isArray(data[0].cards) && data[0].cards.length > 0){
       var dbCards = data[0].cards;
 
-      /*
-       * ── 핵심 수정 ──────────────────────────────────────────────
-       * DOM 카드 ID(로컬 생성)와 DB 카드 ID가 다를 수 있음 → ID 불일치로
-       * syncFromDOM이 teamCards를 못 찾아 텍스트 업데이트가 끊기는 버그 방지.
-       *
-       * 해결: 현재 DOM 텍스트를 인덱스(순서)로 수집 → DB 카드에 병합 →
-       * renderTeamCards()로 DOM을 DB 카드 ID 기준으로 완전 재구성.
-       * 이후 teamCards ↔ DOM 카드 ID가 항상 일치하게 됨.
-       * ────────────────────────────────────────────────────────── */
-
-      /* 1) 현재 DOM 텍스트를 인덱스(위치)로 수집 */
-      var domByIndex = [];
-      document.querySelectorAll('.team-card-wrap').forEach(function(wrap, i){
-        domByIndex[i] = {
-          label:    (wrap.querySelector('.pc-badge-input')||{}).value || '',
-          title:    (wrap.querySelector('.f-title')||{}).value        || '',
-          teamInfo: (wrap.querySelector('.f-team')||{}).value         || '',
-          comment:  (wrap.querySelector('.f-comment')||{}).value      || '',
-          tip:      (wrap.querySelector('.tip-textarea')||{}).value      || '',
-          photo:    teamCards[i] ? teamCards[i].photo : ''
-        };
-      });
-
-      /* 2) DB 카드에 DOM 텍스트 병합 (같은 순서 기준) */
-      dbCards = dbCards.map(function(dbCard, i){
-        var dom = domByIndex[i] || {};
+      /* DB 데이터를 기준으로 사용.
+       * 사진은 DB에서 200KB 초과 시 제거되므로 localStorage에서 복원 */
+      dbCards = dbCards.map(function(dbCard){
+        var photo = dbCard.photo || '';
+        /* localStorage에 사진이 있으면 우선 사용 */
+        if(!photo){
+          try{
+            var lp = localStorage.getItem('kb_photo_'+name+'_'+dbCard.id);
+            if(lp) photo = lp;
+          }catch(e){}
+        }
+        /* likes는 로컬 teamCards와 DB 중 큰 값 */
+        var localCard = teamCards.find(function(c){return c.id===dbCard.id;});
         return Object.assign({}, dbCard, {
-          label:    dom.label    || dbCard.label    || 'CASE',
-          title:    dom.title    || dbCard.title    || '',
-          teamInfo: dom.teamInfo || dbCard.teamInfo || (currentTeam ? 'PLC 1차 ' + currentTeam : ''),
-          /* likes는 DB값과 로컬값 중 큰 값 사용 (중복 좋아요 보존) */
-          likes: Math.max(dbCard.likes||0, (teamCards.find(function(c){return c.id===dbCard.id;})||{}).likes||0),
-          comment:  dom.comment  || dbCard.comment  || '',
-          tip:      dom.tip      || dbCard.tip      || '',
-          /* 사진: 로컬에 있으면 우선, 없으면 DB 것 사용 */
-          photo:    dom.photo    || dbCard.photo    || ''
+          photo: photo,
+          likes: Math.max(dbCard.likes||0, localCard ? (localCard.likes||0) : 0)
         });
       });
 
-      /* 3) teamCards를 DB 카드 ID 기준으로 교체 */
       teamCards = dbCards;
       saveLocal(name, teamCards);
-
-      /* 4) DOM을 teamCards(DB ID 기준)로 완전 재구성
-       *    → 이후 syncFromDOM이 항상 올바른 카드를 찾음 */
       renderTeamCards();
     }
     setSaveStatus('saved');
   }catch(e){
+    console.error('syncFromDB error:', e);
     setSaveStatus(teamCards.length > 0 ? 'saved' : 'offline');
   }
 }
